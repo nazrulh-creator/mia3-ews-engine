@@ -1,0 +1,31 @@
+# Keep the build context small and the image clean.
+.venv/
+venv/
+env/
+.git/
+.github/
+.claude/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+
+# Runtime / generated data (regenerable; not part of the image)
+data/runtime/
+data/synthetic/
+artifacts/*.json
+artifacts/*.pkl
+*.db
+*.sqlite*
+
+# Local env / editor
+.env
+.env.local
+.DS_Store
+.idea/
+.vscode/
+
+# Docs not needed at runtime
+*.md
+docs/
+tests/

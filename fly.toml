@@ -9,8 +9,14 @@ primary_region = "sin"   # Singapore — nearest region to Malaysia
 
 [env]
   MIA3_ENV = "TEST"
-  # MIA3_DATABASE_URL is set as a secret (Postgres). Falls back to sqlite locally.
+  # TEST uses SQLite on the mounted volume below (default DB path lives under
+  # /app/data, which is the persistent volume). For shared-state production
+  # with a scheduled scorer, set MIA3_DATABASE_URL to a Postgres URL instead.
   # MIA3_MODEL_PATH is set once the real artifact is attached.
+
+[mounts]
+  source = "mia3_data"
+  destination = "/app/data"
 
 [http_service]
   internal_port = 8080
