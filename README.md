@@ -118,4 +118,6 @@ pytest                                  # scoring, pipeline, golden pack, audit 
 - No real borrower data in external AI tools — synthetic/de-identified only.
 
 See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the coupling rules and the
-safe-degradation table.
+safe-degradation table, and the full [`docs/SOFTWARE_DESIGN_DOCUMENT.md`](docs/SOFTWARE_DESIGN_DOCUMENT.md)
+for the comprehensive design (regenerate the Word copy with
+`python -m scripts.make_sdd`).
