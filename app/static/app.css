@@ -137,3 +137,9 @@ ul.g-seen li{margin:5px 0}
 .qs-card li{margin:5px 0;font-size:13.5px}
 @media(max-width:860px){.qs-grid{grid-template-columns:1fr}.guide{flex-direction:column}
   .guide-toc{position:static;flex-basis:auto;width:100%;max-height:none}}
+
+/* ---- Learnings library FAQ ---- */
+.card details{border-bottom:1px solid var(--line);padding:8px 0}
+.card details:last-child{border-bottom:none}
+.card details summary{cursor:pointer;font-weight:600;color:var(--sda)}
+.card details p{margin:8px 0 2px}

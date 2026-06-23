@@ -1,9 +1,108 @@
 {% extends "base.html" %}
 {% import "_macros.html" as m %}
 {% block content %}
-<h1>Learnings library</h1>
+<h1>Learnings Library</h1>
+<p class="muted small">Reference materials for the engine — guides, key concepts and
+  FAQs — plus the record of what we are learning as it runs in the real world.</p>
+
+<h2>Documentation &amp; references</h2>
+<div class="qs-grid">
+  <div class="qs-card">
+    <h3>📕 Quick Start</h3>
+    <p class="small">Get going in a few minutes — sign in, generate the demo, read the dashboard.</p>
+    <p><a href="/quickstart" target="_blank" rel="noopener">Open →</a> ·
+       <a href="/quickstart/download">Download (.docx)</a></p>
+  </div>
+  <div class="qs-card">
+    <h3>📖 User Guide</h3>
+    <p class="small">The full, illustrated walkthrough of every screen, with visual cues.</p>
+    <p><a href="/guide" target="_blank" rel="noopener">Open →</a> ·
+       <a href="/guide/download">Download (.docx)</a></p>
+  </div>
+  <div class="qs-card">
+    <h3>🧾 Data contract</h3>
+    <p class="small">Every column the monthly file must contain, with types and missing-value rules.</p>
+    <p><a href="/contract" target="_blank" rel="noopener">Open →</a> ·
+       <a href="/api/v1/contract" target="_blank" rel="noopener">JSON</a></p>
+  </div>
+  {% if user.role in ['internal','fi'] %}
+  <div class="qs-card">
+    <h3>🔌 API reference</h3>
+    <p class="small">Self-documenting JSON API for FI integration (row-scoped to your book).</p>
+    <p><a href="/api/docs" target="_blank" rel="noopener">Open →</a></p>
+  </div>
+  {% endif %}
+</div>
+
+<h2>Key concepts</h2>
+<div class="qs-grid">
+  <div class="qs-card">
+    <h3>What MIA3 is</h3>
+    <p class="small">A smoke-detector for the guaranteed book: it watches loans already on the
+      book and flags those likely to slip into Months-in-Arrears 3. (MicroFlex decides new
+      loans; MIA3 monitors existing ones.)</p>
+    <a class="small" href="/guide#flow" target="_blank" rel="noopener">Learn more →</a>
+  </div>
+  <div class="qs-card">
+    <h3>The risk score &amp; four bands</h3>
+    <p class="small">0.5·rank P(MIA3) + 0.3·rank EAD + 0.2·rank Outstanding ratio → Very High,
+      High, Moderate, Low. Probability, impact and leverage in one number.</p>
+    <a class="small" href="/guide#riskscore" target="_blank" rel="noopener">Learn more →</a>
+  </div>
+  <div class="qs-card">
+    <h3>Confidence &amp; review routing</h3>
+    <p class="small">A 0–100 confidence (five components) decides what a human sees first —
+      borderline cases are held for review.</p>
+    <a class="small" href="/guide#confidence" target="_blank" rel="noopener">Learn more →</a>
+  </div>
+  <div class="qs-card">
+    <h3>Governance &amp; audit</h3>
+    <p class="small">Weights, bands, calibration and model changes are dual-controlled and
+      recorded on a hash-chained, tamper-evident trail.</p>
+    <a class="small" href="/guide#tuning" target="_blank" rel="noopener">Learn more →</a>
+  </div>
+  <div class="qs-card">
+    <h3>Human-on-the-loop</h3>
+    <p class="small">Precision is ~0.49 by design (high recall) — so a flag is a prompt for a
+      person to look, never an automated action against a customer.</p>
+    <a class="small" href="/guide#review" target="_blank" rel="noopener">Learn more →</a>
+  </div>
+  <div class="qs-card">
+    <h3>LIVE vs TEST</h3>
+    <p class="small">Two ringfenced environments with separate databases and audit chains.
+      Test data never reaches LIVE.</p>
+    <a class="small" href="/guide#live-test" target="_blank" rel="noopener">Learn more →</a>
+  </div>
+</div>
+
+<h2>Frequently asked questions</h2>
+<div class="card">
+  <details><summary>Is a flag a decision?</summary>
+    <p class="small">No. A flag prioritises an account for a human to review. The engine never
+      takes automated action against a customer while precision is being calibrated.</p></details>
+  <details><summary>Why do about half the flags turn out to be false alarms?</summary>
+    <p class="small">The model is deliberately tuned for high recall — to catch most at-risk
+      accounts early. Precision (~0.49) is the trade-off. The confidence gate and the human
+      review queue are how that trade-off is managed in practice.</p></details>
+  <details><summary>What's the difference between MIA3 and MicroFlex?</summary>
+    <p class="small">MicroFlex is a gatekeeper — it decides whether to let a new loan through.
+      MIA3 is a smoke detector — it monitors the loans already on the book.</p></details>
+  <details><summary>Can the risk weights or band cut-offs be changed?</summary>
+    <p class="small">Yes — internal risk can change them on the Tuning screen, with a re-banding
+      preview and a second approver (dual control). They are governed settings, never code.</p></details>
+  <details><summary>Is this scoring the real portfolio yet?</summary>
+    <p class="small">The hosted TEST app runs a synthetic stand-in model on synthetic data. The
+      back-tested XGBoost model drops in via the model registry / MIA3_MODEL_PATH.</p></details>
+  <details><summary>Where does the data go?</summary>
+    <p class="small">Synthetic data only in TEST; nothing leaves the engine, and every step is
+      written to the audit trail.</p></details>
+</div>
+
+<h2>Field learnings &amp; outcomes</h2>
+<p class="muted small">What we learn as the model runs: which flags proved right, reviewer
+  notes and patterns, and the reasoning behind model/threshold changes. These feed
+  re-calibration.</p>
 <div class="box">
-  <h2>Add a learning</h2>
   <form method="post" action="/learnings/add">
     <div class="row">
       <div><label>Category {{ m.info('learning_category') }}</label><select name="category">
@@ -18,13 +117,13 @@
   </form>
 </div>
 
-{% if not items %}<p class="muted">No learnings recorded yet.</p>{% else %}
+{% if not items %}<p class="muted">No field learnings recorded yet.</p>{% else %}
 {% for it in items %}
 <div class="card" style="margin-bottom:10px">
   <span class="pill">{{ it.category }}</span>
   <strong>{{ it.title }}</strong>
   <span class="muted small">· {{ it.author }} · {{ it.created_at.strftime('%Y-%m-%d') }}
-    {% if it.linked_account %}· <a href="/accounts">{{ it.linked_account }}</a>{% endif %}</span>
+    {% if it.linked_account %}· {{ it.linked_account }}{% endif %}</span>
   <p class="small">{{ it.body }}</p>
 </div>
 {% endfor %}

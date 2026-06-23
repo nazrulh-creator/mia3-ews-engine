@@ -355,15 +355,17 @@ portfolio-level alert on the dashboard.</p>
 {_note("Groups smaller than five accounts are ignored as too small to be meaningful.")}"""},
 
     {"id": "learnings", "num": "15", "title": "The learnings library", "body": f"""
-<p>The learnings library captures what the institution learns as the model runs in the
-real world — turning a tool that scores into one that improves.</p>
+<p>The Learnings Library is the reference home for the engine, and the record of what the
+institution learns as the model runs — turning a tool that scores into one that improves.</p>
 {_seen(
- "A form to add a learning: a reviewer note/pattern, an observed outcome, or a model/threshold change with its reasoning.",
- "A reverse-chronological feed of recorded learnings, each linkable to an account.")}
+ "<b>Documentation &amp; references</b> — open or download the Quick Start and User Guide, the data contract and the API reference.",
+ "<b>Key concepts</b> cards — short explainers (what MIA3 is, the risk score and bands, confidence, governance) each linking to the relevant guide section.",
+ "<b>FAQs</b> — the common questions answered in one place.",
+ "<b>Field learnings &amp; outcomes</b> — a form and feed to record which flags proved right, reviewer notes, and the reasoning behind model/threshold changes.")}
 {_steps(
- "Record outcomes: which flagged accounts genuinely deteriorated and which did not.",
- "Capture reviewer notes and recurring patterns.",
- "Log model and threshold changes with the reasoning behind them, so the story of the model is never lost.")}"""},
+ "Use the documentation cards to onboard a new user or share a guide.",
+ "Record outcomes as accounts mature: which flagged accounts genuinely deteriorated and which did not.",
+ "Capture reviewer notes, recurring patterns, and the reasoning behind every governed change — so the story of the model is never lost and re-calibration has an evidence base.")}"""},
 
     {"id": "audit", "num": "16", "title": "The audit trail", "body": f"""
 <p>The <b>Audit</b> screen is the tamper-evident record of everything the system did

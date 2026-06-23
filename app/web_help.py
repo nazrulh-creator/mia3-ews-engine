@@ -29,8 +29,9 @@ SCREENS: Dict[str, str] = {
                "approver before they go live — nothing changes silently."),
     "demo": ("A safe, synthetic sandbox that exercises every feature and edge "
              "case. Use it to show the platform without touching real data."),
-    "learnings": ("What we are learning as the model runs: which flags proved "
-                  "right, reviewer notes, and the reasons behind every change."),
+    "learnings": ("A library of reference materials about the engine — guides, "
+                  "key concepts and FAQs — plus the record of what we are learning "
+                  "as the model runs (outcomes, reviewer notes, change reasoning)."),
     "audit": ("The tamper-evident record of everything the system did and who "
               "told it to. Read-only here; exportable for an auditor."),
     "models": ("The model registry. Which version is live, its back-tested "
