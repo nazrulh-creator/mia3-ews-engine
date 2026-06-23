@@ -328,15 +328,22 @@ calibration on the <b>Tuning</b> screen. Nothing changes on one person's say-so.
        "the audit trail with its before/after values.")}"""},
 
     {"id": "models", "num": "13", "title": "The model registry", "body": f"""
-<p>The <b>Models</b> screen records which model version is live, its back-tested
-metrics, and the governed path to promote a new one.</p>
+<p>The <b>Models</b> screen is where internal-risk users register, edit, swap and
+retire model versions. The scoring engine only ever uses the <b>active</b> entry's
+artifact — never a draft.</p>
+{DUAL_CONTROL_SVG}
 {_seen(
- "Each registered model with its kind, status, and AUC / Recall / Precision / FN metrics.",
- "Which model is <b>active</b>, and an <b>Activate</b> action (dual-controlled) for others.")}
-{_note("The live TEST app runs a deterministic synthetic stand-in model. The real "
-       "back-tested XGBoost artifact drops in via the MIA3_MODEL_PATH setting — the loader "
-       "checks its features match the data contract and refuses a mismatch. The scoring "
-       "engine only ever reads an approved, active model — never a draft.")}"""},
+ "The <b>live model</b> card — the active version, its metrics, and a <b>Retire</b> button.",
+ "A <b>Register a new model</b> form — name, version, kind, an artifact upload (or server path), back-test metrics and notes.",
+ "The registry table with each version's status (draft / active / retired), an <b>artifact validity</b> check, and <b>Activate</b> / <b>Edit</b> actions.")}
+{_steps(
+ "<b>Register</b> a new version. Upload its .json/.ubj/.pkl artifact (or give a path), or choose <i>synthetic</i> for a stand-in. It is saved as a <b>draft</b>.",
+ "The registry shows an <b>artifact check</b> — ✓ valid means it loaded and its features match the data contract; ✗ invalid shows why.",
+ "A <b>different</b> internal-risk user clicks <b>Activate</b> (dual control — the registrant cannot activate their own). The artifact is re-validated, the previous model is retired, and the next scoring run uses the new one.",
+ "<b>Edit</b> a draft or retired entry's metadata (retire the live model first to edit it). <b>Retire</b> the live model any time — scoring falls back to the synthetic stand-in.")}
+{_note("The real back-tested XGBoost artifact can also be supplied at deploy time via "
+       "the MIA3_MODEL_PATH setting. Either way, the loader refuses an artifact whose "
+       "features do not match the data contract, so a mismatched model can never score.")}"""},
 
     {"id": "ladder", "num": "14", "title": "Portfolio early-warning ladder", "body": f"""
 <p>Beyond per-account flags, MIA3 watches concentrations. When the share of an FI's or

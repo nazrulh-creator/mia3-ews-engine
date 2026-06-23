@@ -49,10 +49,19 @@ def execute_run(db: Session, df: pd.DataFrame, *, source: str, actor: str,
     cfg = governance.active_risk_config(db)
     calibrator, calibrated = governance.active_calibrator(db)
     threshold_row = governance.active_threshold(db)
-    model = get_active_model()
+    # The scoring engine only ever uses the active registry entry's artifact
+    # (coupling rule: never a draft). No artifact path → synthetic stand-in.
+    model_row = governance.active_model_row(db)
+    model = get_active_model(model_path=governance.active_model_path(db))
 
     vr = validate(df)
     result = score_frame(df, model=model, cfg=cfg, calibrator=calibrator, validation=vr)
+
+    # Record the GOVERNED registry entry on the run (its name/version), falling
+    # back to the loaded model object when no registry entry is active.
+    run_model_name = model_row.name if model_row else result.model_name
+    run_model_version = model_row.version if model_row else result.model_version
+    run_is_synthetic = model_row.is_synthetic if model_row else result.is_synthetic
 
     quality = vr.quality_report()
     # Checkpoint: hold publication if asked, or if nothing could be scored,
@@ -63,8 +72,8 @@ def execute_run(db: Session, df: pd.DataFrame, *, source: str, actor: str,
 
     run = ScoringRun(
         run_ref=_run_ref(db), environment=settings.environment, source=source,
-        model_name=result.model_name, model_version=result.model_version,
-        is_synthetic=result.is_synthetic, calibrated=calibrated,
+        model_name=run_model_name, model_version=run_model_version,
+        is_synthetic=run_is_synthetic, calibrated=calibrated,
         threshold_version=(threshold_row.version if threshold_row else None),
         input_fingerprint=input_fingerprint,
         rows_in=quality["rows_in"], rows_scored=result.n_scored,

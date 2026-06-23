@@ -213,3 +213,27 @@ def get_active_model(model_path: Optional[Path] = None) -> ModelWrapper:
 
 def reset_model_cache() -> None:
     _CACHE.clear()
+
+
+def validate_artifact(path: Optional[Path]) -> tuple:
+    """Pre-flight a model artifact before it is activated.
+
+    Returns (ok, message). A synthetic entry (no path) is always valid.
+    A real artifact must load and its features must match the data contract.
+    """
+    if not path:
+        return True, "Synthetic stand-in — no artifact to validate."
+    p = Path(path)
+    if not p.exists():
+        return False, f"Artifact not found at {p}."
+    try:
+        real = _load_real(p)
+    except RuntimeError as exc:
+        return False, str(exc)
+    if real is None:
+        return False, "Could not load the artifact."
+    contract, artifact = set(MODEL_FEATURE_NAMES), set(real.feature_names)
+    if contract != artifact:
+        return False, (f"Feature mismatch — missing={sorted(contract - artifact)}, "
+                       f"unexpected={sorted(artifact - contract)}.")
+    return True, f"Loaded OK ({len(real.feature_names)} features match the contract)."

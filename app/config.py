@@ -17,8 +17,11 @@ RUNTIME_DIR = DATA_DIR / "runtime"
 SYNTHETIC_DIR = DATA_DIR / "synthetic"
 ARTIFACTS_DIR = BASE_DIR / "artifacts"
 UPLOAD_DIR = RUNTIME_DIR / "uploads"
+# Uploaded model artifacts live under the data dir so they persist on the
+# mounted volume (DATA_DIR is /app/data in the deployed TEST app).
+MODELS_DIR = DATA_DIR / "models"
 
-for _d in (RUNTIME_DIR, SYNTHETIC_DIR, ARTIFACTS_DIR, UPLOAD_DIR):
+for _d in (RUNTIME_DIR, SYNTHETIC_DIR, ARTIFACTS_DIR, UPLOAD_DIR, MODELS_DIR):
     _d.mkdir(parents=True, exist_ok=True)
 
 

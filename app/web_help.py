@@ -101,6 +101,20 @@ FIELDS: Dict[str, str] = {
     # Universal problem reporting
     "problem_detail": "Describe what went wrong. We auto-capture the screen, your "
                       "user and the time, and link it to the audit trail.",
+    # Model registry — register / edit
+    "model_name": "A human-readable model name, e.g. 'MIA3 XGBoost'.",
+    "model_version": "A unique version string, e.g. '2026-Q2'. Two entries cannot "
+                     "share a version.",
+    "model_kind": "real = a trained artifact you supply; synthetic = the built-in "
+                  "deterministic stand-in (no artifact needed).",
+    "model_artifact": "Upload the .json/.ubj/.pkl artifact, or give a server path. "
+                      "It is validated against the data contract before activation; "
+                      "leave empty for a synthetic entry.",
+    "model_auc": "Back-tested AUC (0–1). Optional, shown on the registry.",
+    "model_recall": "Back-tested recall (0–1). Optional.",
+    "model_precision": "Back-tested precision (0–1). Optional.",
+    "model_fn": "Back-tested false-negative rate (0–1). Optional.",
+    "model_notes": "Provenance and back-testing notes for this version.",
 }
 
 # Which screens take data entry, and which field tooltips each must expose —
@@ -114,6 +128,9 @@ DATA_ENTRY_FIELDS: Dict[str, list] = {
     "account_detail": ["review_decision", "review_outcome", "review_reason"],
     "learnings": ["learning_category", "learning_linked", "learning_title",
                   "learning_body"],
+    "models": ["model_name", "model_version", "model_kind", "model_artifact",
+               "model_auc", "model_recall", "model_precision", "model_fn",
+               "model_notes"],
 }
 
 

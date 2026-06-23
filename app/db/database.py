@@ -9,7 +9,7 @@ from __future__ import annotations
 from contextlib import contextmanager
 from typing import Iterator
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
 from app.config import get_settings
@@ -25,10 +25,32 @@ class Base(DeclarativeBase):
     pass
 
 
+# Columns added after an environment's DB was first created. Kept tiny and
+# additive — create_all never adds columns to an existing table, so we ALTER.
+_ADDITIVE_COLUMNS = {
+    "model_registry": [("registered_by", "VARCHAR(64)")],
+}
+
+
+def _ensure_columns() -> None:
+    """Idempotently add any missing additive columns (simple migration)."""
+    insp = inspect(engine)
+    existing_tables = set(insp.get_table_names())
+    with engine.begin() as conn:
+        for table, cols in _ADDITIVE_COLUMNS.items():
+            if table not in existing_tables:
+                continue
+            have = {c["name"] for c in insp.get_columns(table)}
+            for name, ddl_type in cols:
+                if name not in have:
+                    conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {name} {ddl_type}"))
+
+
 def init_db() -> None:
-    """Create tables if absent. Imports models so they register on Base."""
+    """Create tables if absent, then apply additive column migrations."""
     from app.db import models  # noqa: F401  (register mappers)
     Base.metadata.create_all(bind=engine)
+    _ensure_columns()
 
 
 @contextmanager

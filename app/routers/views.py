@@ -224,15 +224,6 @@ def audit_page(request: Request, user: User = Depends(require_internal),
                                                         events=events, integrity=integrity))
 
 
-# --- Model registry --------------------------------------------------------
-@router.get("/models", response_class=HTMLResponse)
-def models_page(request: Request, user: User = Depends(require_internal),
-                db: Session = Depends(get_db)):
-    rows = db.execute(select(ModelRegistry).order_by(ModelRegistry.created_at.desc())
-                      ).scalars().all()
-    return templates.TemplateResponse("models.html", _ctx(request, user, "models", rows=rows))
-
-
 # --- Data contract ---------------------------------------------------------
 @router.get("/contract", response_class=HTMLResponse)
 def contract_page(request: Request, user: User = Depends(require_user)):

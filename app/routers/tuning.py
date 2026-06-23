@@ -103,14 +103,3 @@ def calibration_approve(request: Request, config_id: int = Form(...),
     except governance.GovernanceError as exc:
         return _render(request, user, db, error=str(exc), status_code=400)
     return RedirectResponse("/tuning", status_code=303)
-
-
-@router.post("/tuning/model/activate")
-def model_activate(request: Request, model_id: int = Form(...),
-                   user: User = Depends(require_internal), db: Session = Depends(get_db)):
-    try:
-        governance.activate_model(db, approver=user.username, model_id=model_id)
-        db.commit()
-    except governance.GovernanceError as exc:
-        return _render(request, user, db, error=str(exc), status_code=400)
-    return RedirectResponse("/models", status_code=303)

@@ -49,6 +49,7 @@ class ModelRegistry(Base):
     fn_rate: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
+    registered_by: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
     activated_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     activated_by: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
     approved_by: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)

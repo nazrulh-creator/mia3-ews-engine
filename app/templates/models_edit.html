@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m %}
+{% block content %}
+<p class="small"><a href="/models">&larr; Model registry</a></p>
+<h1>Edit model — {{ row.name }} <span class="pill">{{ row.version }}</span></h1>
+{% if locked %}
+<div class="warnbox">This model is <b>active</b> and locked. Retire it from the registry
+  before editing, so a live model never changes underneath users.</div>
+{% else %}
+<div class="box">
+  <form method="post" action="/models/{{ row.id }}/edit" enctype="multipart/form-data">
+    <div class="row">
+      <div><label>Name {{ m.info('model_name') }}</label><input name="name" value="{{ row.name }}" required></div>
+      <div><label>Version</label><input value="{{ row.version }}" disabled>
+        <span class="small muted">version is fixed</span></div>
+      <div><label>Kind {{ m.info('model_kind') }}</label>
+        <select name="kind">
+          <option value="real" {{ 'selected' if not row.is_synthetic }}>real (artifact)</option>
+          <option value="synthetic" {{ 'selected' if row.is_synthetic }}>synthetic (stand-in)</option>
+        </select></div>
+    </div>
+    <label>Artifact path {{ m.info('model_artifact') }}</label>
+    <input name="artifact_path" value="{{ row.artifact_path or '' }}" placeholder="/app/data/models/…">
+    <div class="row">
+      <div><label>AUC {{ m.info('model_auc') }}</label><input name="auc" type="number" step="0.01" value="{{ row.auc if row.auc is not none else '' }}"></div>
+      <div><label>Recall {{ m.info('model_recall') }}</label><input name="recall" type="number" step="0.01" value="{{ row.recall if row.recall is not none else '' }}"></div>
+      <div><label>Precision {{ m.info('model_precision') }}</label><input name="precision" type="number" step="0.01" value="{{ row.precision if row.precision is not none else '' }}"></div>
+      <div><label>FN rate {{ m.info('model_fn') }}</label><input name="fn_rate" type="number" step="0.01" value="{{ row.fn_rate if row.fn_rate is not none else '' }}"></div>
+    </div>
+    <label>Notes {{ m.info('model_notes') }}</label><input name="notes" value="{{ row.notes or '' }}">
+    <p><button type="submit">Save changes</button>
+       <a href="/models"><button type="button" class="secondary">Cancel</button></a></p>
+  </form>
+</div>
+{% endif %}
+{% endblock %}

@@ -9,6 +9,7 @@ latest portfolio before they go live, so tuning is never a leap in the dark.
 from __future__ import annotations
 
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Callable, Dict, List, Optional, Tuple
 
 import numpy as np
@@ -183,21 +184,96 @@ def active_model_row(db: Session) -> Optional[ModelRegistry]:
     return db.execute(select(ModelRegistry).where(ModelRegistry.status == "active")).scalars().first()
 
 
-def activate_model(db: Session, *, approver: str, model_id: int) -> ModelRegistry:
+def active_model_path(db: Session):
+    """Artifact path of the active registry entry, or None (→ synthetic)."""
+    row = active_model_row(db)
+    if row and row.artifact_path:
+        return Path(row.artifact_path)
+    return None
+
+
+def register_model(db: Session, *, actor: str, name: str, version: str, kind: str,
+                   is_synthetic: bool, artifact_path: Optional[str],
+                   auc: Optional[float], recall: Optional[float],
+                   precision: Optional[float], fn_rate: Optional[float],
+                   notes: str) -> ModelRegistry:
+    """Maker registers a new model version as a draft (not yet live)."""
+    if not name or not version:
+        raise GovernanceError("Name and version are required.")
+    clash = db.execute(select(ModelRegistry).where(ModelRegistry.version == version)).scalars().first()
+    if clash:
+        raise GovernanceError(f"Version '{version}' already exists in the registry.")
+    row = ModelRegistry(name=name, version=version, kind=kind, is_synthetic=is_synthetic,
+                        artifact_path=artifact_path or None, status="draft",
+                        auc=auc, recall=recall, precision=precision, fn_rate=fn_rate,
+                        notes=notes or None, registered_by=actor)
+    db.add(row)
+    db.flush()
+    audit.record(db, actor=actor, action="model.register", entity_type="model",
+                 entity_id=version, after={"name": name, "kind": kind,
+                 "artifact": artifact_path, "is_synthetic": is_synthetic}, detail=notes or None)
+    return row
+
+
+def update_model(db: Session, *, actor: str, model_id: int, **fields) -> ModelRegistry:
+    """Edit a draft or retired entry's metadata. The active model is locked —
+    retire it first to edit, so a live model never changes underneath users."""
     row = db.get(ModelRegistry, model_id)
     if row is None:
         raise GovernanceError("No such model registry entry.")
-    if row.approved_by and row.approved_by == approver and row.activated_by == approver:
-        raise GovernanceError("Dual control: a different approver is required.")
+    if row.status == "active":
+        raise GovernanceError("The active model is locked. Retire it before editing.")
+    before = {k: getattr(row, k) for k in fields}
+    for key, value in fields.items():
+        setattr(row, key, value)
+    db.flush()
+    audit.record(db, actor=actor, action="model.update", entity_type="model",
+                 entity_id=row.version, before=before, after=dict(fields))
+    return row
+
+
+def activate_model(db: Session, *, approver: str, model_id: int) -> ModelRegistry:
+    """Checker activates a model. Dual control + artifact pre-flight."""
+    from app.core import model as model_core
+    row = db.get(ModelRegistry, model_id)
+    if row is None:
+        raise GovernanceError("No such model registry entry.")
+    if row.status == "active":
+        raise GovernanceError("That model is already active.")
+    if row.registered_by and row.registered_by == approver:
+        raise GovernanceError(
+            "Dual control: the person who registered a model cannot activate it.")
+    ok, message = model_core.validate_artifact(Path(row.artifact_path) if row.artifact_path else None)
+    if not ok:
+        raise GovernanceError(f"Cannot activate — artifact failed validation: {message}")
     previous = active_model_row(db)
+    before = {"version": previous.version} if previous else None
     if previous and previous.id != row.id:
         previous.status = "retired"
     row.status = "active"
     row.activated_by = approver
+    row.approved_by = approver
     row.activated_at = _now()
     db.flush()
+    model_core.reset_model_cache()  # next scoring run loads the newly active model
     audit.record(db, actor=approver, action="model.activate", entity_type="model",
-                 entity_id=row.version, detail=f"Activated model {row.name} {row.version}.")
+                 entity_id=row.version, before=before,
+                 after={"version": row.version, "validation": message},
+                 detail=f"Activated {row.name} {row.version}.")
+    return row
+
+
+def retire_model(db: Session, *, actor: str, model_id: int) -> ModelRegistry:
+    """Retire the active model (the safe direction — single control)."""
+    from app.core import model as model_core
+    row = db.get(ModelRegistry, model_id)
+    if row is None:
+        raise GovernanceError("No such model registry entry.")
+    row.status = "retired"
+    db.flush()
+    model_core.reset_model_cache()
+    audit.record(db, actor=actor, action="model.retire", entity_type="model",
+                 entity_id=row.version, detail=f"Retired {row.name} {row.version}.")
     return row
 
 

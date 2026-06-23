@@ -1,29 +1,94 @@
 {% extends "base.html" %}
+{% import "_macros.html" as m %}
 {% block content %}
 <h1>Model registry</h1>
+{% if error %}<div class="alert">{{ error }}</div>{% endif %}
+{% if ok %}<div class="ok">{{ ok }}</div>{% endif %}
 <p class="small muted">Which model version is live, its back-tested metrics, and the
-  governed path to promote a new one (dual control). Drop the real artifact in via
-  <code>MIA3_MODEL_PATH</code>; the loader checks its features match the data contract.</p>
+  governed path to register, edit, swap or retire one. The scoring engine only ever
+  uses the <b>active</b> entry's artifact — never a draft.</p>
+
+{% if active %}
+<div class="card">
+  <h2>Live model</h2>
+  <p><strong>{{ active.name }}</strong> <span class="pill">{{ active.version }}</span>
+    {% if active.is_synthetic %}<span class="tag-test">synthetic stand-in</span>{% endif %}
+    — AUC {{ active.auc if active.auc is not none else '—' }},
+    Recall {{ active.recall if active.recall is not none else '—' }},
+    Precision {{ active.precision if active.precision is not none else '—' }}.
+    {% if active.artifact_path %}<br><span class="small muted">artifact: <code>{{ active.artifact_path }}</code></span>{% endif %}
+  </p>
+  <form method="post" action="/models/retire" class="inline"
+        onsubmit="return confirm('Retire the live model? Scoring falls back to the synthetic stand-in until another is activated.');">
+    <input type="hidden" name="model_id" value="{{ active.id }}">
+    <button class="secondary">Retire live model</button>
+  </form>
+</div>
+{% else %}
+<div class="warnbox">No active model — scoring uses the synthetic stand-in. Activate one below.</div>
+{% endif %}
+
+<div class="box">
+  <h2>Register a new model</h2>
+  <p class="small muted">This creates a <b>draft</b>. A different person must activate it
+    (dual control), and the artifact is validated against the data contract first.</p>
+  <form method="post" action="/models/register" enctype="multipart/form-data">
+    <div class="row">
+      <div><label>Name {{ m.info('model_name') }}</label><input name="name" required></div>
+      <div><label>Version {{ m.info('model_version') }}</label><input name="version" required placeholder="2026-Q2"></div>
+      <div><label>Kind {{ m.info('model_kind') }}</label>
+        <select name="kind"><option value="real">real (artifact)</option>
+          <option value="synthetic">synthetic (stand-in)</option></select></div>
+    </div>
+    <div class="row">
+      <div><label>Artifact file {{ m.info('model_artifact') }}</label>
+        <input type="file" name="file" accept=".json,.ubj,.bst,.pkl"></div>
+      <div><label>…or server path</label><input name="artifact_path" placeholder="/app/data/models/…"></div>
+    </div>
+    <div class="row">
+      <div><label>AUC {{ m.info('model_auc') }}</label><input name="auc" type="number" step="0.01"></div>
+      <div><label>Recall {{ m.info('model_recall') }}</label><input name="recall" type="number" step="0.01"></div>
+      <div><label>Precision {{ m.info('model_precision') }}</label><input name="precision" type="number" step="0.01"></div>
+      <div><label>FN rate {{ m.info('model_fn') }}</label><input name="fn_rate" type="number" step="0.01"></div>
+    </div>
+    <label>Notes {{ m.info('model_notes') }}</label><input name="notes" placeholder="Provenance / back-testing notes">
+    <p><button type="submit">Register draft</button></p>
+  </form>
+</div>
+
 <table>
   <tr><th>Name</th><th>Version</th><th>Kind</th><th>Status</th>
     <th class="right">AUC</th><th class="right">Recall</th><th class="right">Precision</th>
-    <th class="right">FN</th><th>Notes</th><th></th></tr>
-  {% for m in rows %}
+    <th class="right">FN</th><th>Artifact check</th><th>Actions</th></tr>
+  {% for r in rows %}
   <tr>
-    <td>{{ m.name }}</td><td class="small">{{ m.version }}</td>
-    <td>{{ m.kind }}{% if m.is_synthetic %} <span class="tag-test">synthetic</span>{% endif %}</td>
-    <td>{% if m.status=='active' %}<span class="badge" style="background:#27ae60">active</span>
-      {% else %}<span class="pill">{{ m.status }}</span>{% endif %}</td>
-    <td class="right">{{ m.auc if m.auc is not none else '—' }}</td>
-    <td class="right">{{ m.recall if m.recall is not none else '—' }}</td>
-    <td class="right">{{ m.precision if m.precision is not none else '—' }}</td>
-    <td class="right">{{ (m.fn_rate*100)|round(1) ~ '%' if m.fn_rate is not none else '—' }}</td>
-    <td class="small">{{ m.notes or '' }}</td>
-    <td>{% if m.status != 'active' %}
-      <form method="post" action="/tuning/model/activate" class="inline">
-        <input type="hidden" name="model_id" value="{{ m.id }}">
-        <button class="small">Activate</button></form>{% endif %}</td>
+    <td>{{ r.name }}</td><td class="small">{{ r.version }}</td>
+    <td>{{ r.kind }}{% if r.is_synthetic %} <span class="tag-test">synthetic</span>{% endif %}</td>
+    <td>{% if r.status=='active' %}<span class="badge" style="background:#27ae60">active</span>
+      {% elif r.status=='draft' %}<span class="pill">draft</span>
+      {% else %}<span class="pill">retired</span>{% endif %}</td>
+    <td class="right">{{ r.auc if r.auc is not none else '—' }}</td>
+    <td class="right">{{ r.recall if r.recall is not none else '—' }}</td>
+    <td class="right">{{ r.precision if r.precision is not none else '—' }}</td>
+    <td class="right">{{ (r.fn_rate*100)|round(1) ~ '%' if r.fn_rate is not none else '—' }}</td>
+    <td class="small">
+      {% if r.id in validations %}
+        {% if validations[r.id].ok %}<span style="color:#1d7a46">✓ valid</span>
+        {% else %}<span style="color:#c0392b" title="{{ validations[r.id].msg }}">✗ invalid</span>{% endif %}
+      {% else %}<span class="muted">synthetic</span>{% endif %}
+    </td>
+    <td>
+      {% if r.status != 'active' %}
+        <form method="post" action="/models/activate" class="inline">
+          <input type="hidden" name="model_id" value="{{ r.id }}">
+          <button class="small">Activate</button></form>
+        <a class="small" href="/models/{{ r.id }}/edit">Edit</a>
+      {% else %}<span class="muted small">live</span>{% endif %}
+    </td>
   </tr>
   {% endfor %}
 </table>
+<p class="small muted">Dual control: the person who registers a model cannot activate it —
+  a second internal-risk approver must. Retiring the live model is immediate (the safe
+  direction). The real XGBoost artifact also drops in via <code>MIA3_MODEL_PATH</code>.</p>
 {% endblock %}
