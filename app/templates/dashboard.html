@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m %}
+{% block content %}
+<h1>Portfolio overview</h1>
+{% if not run %}
+  <div class="warnbox">No published scoring run yet.
+    {% if user.role == 'internal' %} Upload a file on <a href="/runs">Runs</a>,
+    or load the <a href="/demo">demonstration data</a>.{% endif %}</div>
+{% else %}
+<p class="muted small">Latest run <strong>{{ run.run_ref }}</strong> ·
+  {{ run.created_at.strftime('%Y-%m-%d %H:%M') }} ·
+  model {{ run.model_name }} ({{ run.model_version }})
+  {% if run.is_synthetic %}<span class="tag-test">· SYNTHETIC MODEL</span>{% endif %}
+  {% if run.calibrated %}· calibrated{% endif %} ·
+  {{ run.rows_scored }} accounts scored.</p>
+
+{% if alerts %}
+<div class="warnbox"><strong>Portfolio early-warning ladder:</strong>
+  {% for a in alerts %}
+    <span class="pill">{{ a.dimension|upper }} {{ a.key }}: {{ (a.high_risk_share*100)|round(1) }}%
+      high-risk — <strong>{{ a.tripwire|upper }}</strong></span>
+  {% endfor %}
+</div>
+{% endif %}
+
+<div class="grid cards">
+  {% for band in BANDS %}
+  <a class="card kpi" href="/accounts?band={{ band|urlencode }}" style="text-decoration:none;color:inherit">
+    <div class="l">{{ m.band_dot(band) }}{{ band }}</div>
+    <div class="n" style="color:{{ BAND_META[band].color }}">{{ counts.get(band, 0) }}</div>
+  </a>
+  {% endfor %}
+</div>
+
+<div class="row" style="margin-top:18px">
+  {% for title, dim, data in [('By FI','fi', by_fi),('By scheme','scheme', by_scheme),('By sector','sector', by_sector)] %}
+  <div class="card" style="flex:1;min-width:320px">
+    <h2>{{ title }}</h2>
+    <table>
+      <tr><th>{{ dim|capitalize }}</th><th class="right">Total</th>
+        <th class="right">High-risk</th><th class="right">High %</th></tr>
+      {% for r in data %}
+      <tr>
+        <td><a href="/accounts?{{ dim if dim!='fi' else 'fi' }}={{ r.key|urlencode }}">{{ r.key }}</a></td>
+        <td class="right">{{ r.total }}</td>
+        <td class="right">{{ r.high_risk }}</td>
+        <td class="right" style="color:{{ '#c0392b' if r.high_share>=0.3 else ('#e67e22' if r.high_share>=0.15 else 'inherit') }}">
+          {{ (r.high_share*100)|round(1) }}%</td>
+      </tr>
+      {% endfor %}
+    </table>
+  </div>
+  {% endfor %}
+</div>
+
+{% if trend|length > 1 %}
+<div class="card" style="margin-top:18px">
+  <h2>Trend over runs</h2>
+  <table>
+    <tr><th>Run date</th>{% for band in BANDS %}<th class="right">{{ m.band_dot(band) }}{{ band }}</th>{% endfor %}</tr>
+    {% for t in trend %}
+    <tr><td>{{ t.created_at }}</td>{% for band in BANDS %}<td class="right">{{ t.get(band,0) }}</td>{% endfor %}</tr>
+    {% endfor %}
+  </table>
+</div>
+{% endif %}
+{% endif %}
+{% endblock %}

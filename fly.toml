@@ -1,0 +1,33 @@
+# MIA3 Early Warning Engine — Fly.io deployment (separate app from MicroFlex,
+# with its own database). The web app runs as one machine; the monthly scoring
+# runs as a SCHEDULED machine that wakes, scores, and sleeps.
+app = "mia3-ews-engine-test"
+primary_region = "sin"   # Singapore — nearest region to Malaysia
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  MIA3_ENV = "TEST"
+  # MIA3_DATABASE_URL is set as a secret (Postgres). Falls back to sqlite locally.
+  # MIA3_MODEL_PATH is set once the real artifact is attached.
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ["web"]
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "1gb"
+
+[processes]
+  web = "uvicorn app.main:app --host 0.0.0.0 --port 8080"
+
+# Monthly scoring is run as a scheduled machine (provisioned separately), e.g.:
+#   fly machine run . --schedule monthly --process scorer \
+#     --command "python -m scripts.run_batch"
+# A live database feed or a manual run on the Runs page are the alternatives.

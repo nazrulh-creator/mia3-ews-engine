@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Demonstration mode</h1>
+<div class="warnbox">This is a ringfenced, synthetic sandbox. Nothing here is real
+  borrower data. Use it to show the platform to a committee or an FI safely.</div>
+
+<div class="box">
+  <h2>Load the synthetic portfolio</h2>
+  <p class="small muted">Generates ~400 accounts across all four risk bands, several
+    FIs, schemes and sectors, plus deliberate boundary cases that exercise every path:</p>
+  <ul class="small">
+    <li>an account sitting on the band edge,</li>
+    <li>high-probability / low-exposure,</li>
+    <li>low-probability / very-high-exposure,</li>
+    <li>a borderline-confidence case that routes to human review,</li>
+    <li>a malformed row that is quarantined.</li>
+  </ul>
+  <form method="post" action="/demo/run">
+    <button type="submit">Generate &amp; score demo portfolio</button>
+  </form>
+  {% if last_demo %}
+  <p class="small muted">Last demo run: <strong>{{ last_demo.run_ref }}</strong>
+    ({{ last_demo.rows_scored }} scored, {{ last_demo.rows_quarantined }} quarantined) —
+    see the <a href="/dashboard">dashboard</a>.</p>
+  {% endif %}
+</div>
+{% endblock %}

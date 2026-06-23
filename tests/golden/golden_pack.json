@@ -1,0 +1,43 @@
+{
+  "model": "MIA3-Synthetic-Logit",
+  "model_version": "synthetic-1.0.0",
+  "is_synthetic": true,
+  "cases": [
+    {
+      "account_id": "G-HEALTHY",
+      "probability": 0.000118,
+      "pd_rank": 1,
+      "ead_rank": 1,
+      "outratio_rank": 1,
+      "risk_score": 1.0,
+      "band": "Low Risk",
+      "confidence": 78.37,
+      "confidence_band": "high",
+      "review_status": "no_review"
+    },
+    {
+      "account_id": "G-STRESSED",
+      "probability": 1.0,
+      "pd_rank": 4,
+      "ead_rank": 4,
+      "outratio_rank": 4,
+      "risk_score": 4.0,
+      "band": "Very High Risk",
+      "confidence": 75.96,
+      "confidence_band": "high",
+      "review_status": "fast_track"
+    },
+    {
+      "account_id": "G-MID",
+      "probability": 0.832484,
+      "pd_rank": 4,
+      "ead_rank": 3,
+      "outratio_rank": 3,
+      "risk_score": 3.5,
+      "band": "High Risk",
+      "confidence": 81.3,
+      "confidence_band": "high",
+      "review_status": "fast_track"
+    }
+  ]
+}

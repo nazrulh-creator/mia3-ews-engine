@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m %}
+{% block content %}
+<h1>{{ 'Action worklist' if worklist else 'Accounts' }}</h1>
+{% if not run %}<div class="warnbox">No published run yet.</div>{% else %}
+
+{% if not worklist %}
+<form class="box guided-only" method="get" action="/accounts">
+  <div class="row">
+    <div><label>Band {{ m.info('band') }}</label>
+      <select name="band"><option value="">All</option>
+        {% for b in BANDS %}<option {{ 'selected' if filters.band==b }}>{{ b }}</option>{% endfor %}</select></div>
+    <div><label>Scheme</label><input name="scheme" value="{{ filters.scheme or '' }}"></div>
+    <div><label>Sector</label><input name="sector" value="{{ filters.sector or '' }}"></div>
+    <div style="align-self:flex-end"><button type="submit">Filter</button></div>
+  </div>
+</form>
+{% endif %}
+
+<p class="muted small">{{ rows|length }} account(s){% if rows|length==500 %} (showing first 500){% endif %}.</p>
+<table>
+  <tr>
+    <th>Account</th><th>FI</th><th>Scheme / Sector</th>
+    <th class="right">P(MIA3) {{ m.info('probability') }}</th>
+    <th class="right">EAD {{ m.info('ead') }}</th>
+    <th class="right">Risk {{ m.info('risk_score') }}</th>
+    <th>Band {{ m.info('band') }}</th>
+    <th class="right">Conf {{ m.info('confidence') }}</th>
+    <th>Routing {{ m.info('review_status') }}</th>
+  </tr>
+  {% for r in rows %}
+  <tr>
+    <td><a href="/accounts/{{ r.id }}">{{ r.account_id }}</a></td>
+    <td>{{ r.fi_id }}</td>
+    <td class="small">{{ r.scheme }} / {{ r.sector }}</td>
+    <td class="right">{{ (r.probability*100)|round(1) }}%</td>
+    <td class="right">{{ r.ead|money }}</td>
+    <td class="right"><strong>{{ r.risk_score }}</strong></td>
+    <td>{{ m.band_dot(r.band) }}{{ r.band }}</td>
+    <td class="right">{{ r.confidence|round(0)|int }}</td>
+    <td><span class="pill">{{ r.review_status.replace('_',' ') }}</span></td>
+  </tr>
+  {% endfor %}
+</table>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Audit trail</h1>
+{% if integrity.ok %}
+  <div class="ok">Chain verified — {{ integrity.events }} event(s), no tampering detected.</div>
+{% else %}
+  <div class="alert">Chain integrity BROKEN at seq {{ integrity.broken_at_seq }}.</div>
+{% endif %}
+<p class="small muted">Append-only and hash-chained. Read-only here. Showing most recent 300.</p>
+<table>
+  <tr><th>Seq</th><th>When (UTC)</th><th>Actor</th><th>Action</th><th>Entity</th><th>Detail</th><th>Hash</th></tr>
+  {% for e in events %}
+  <tr>
+    <td>{{ e.seq }}</td>
+    <td class="small">{{ e.ts.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+    <td>{{ e.actor }}</td>
+    <td><span class="pill">{{ e.action }}</span></td>
+    <td class="small">{{ e.entity_type or '' }} {{ e.entity_id or '' }}</td>
+    <td class="small">{{ e.detail or '' }}</td>
+    <td class="small muted" title="prev {{ e.prev_hash[:12] }}">{{ e.hash[:12] }}…</td>
+  </tr>
+  {% endfor %}
+</table>
+{% endblock %}

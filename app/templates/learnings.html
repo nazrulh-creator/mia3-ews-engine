@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Learnings library</h1>
+<div class="box">
+  <h2>Add a learning</h2>
+  <form method="post" action="/learnings/add">
+    <div class="row">
+      <div><label>Category</label><select name="category">
+        <option value="note">Reviewer note / pattern</option>
+        <option value="outcome">Observed outcome</option>
+        <option value="change">Model / threshold change</option></select></div>
+      <div><label>Linked account (optional)</label><input name="linked_account"></div>
+    </div>
+    <label>Title</label><input name="title" required style="max-width:560px">
+    <label>Detail</label><textarea name="body" required></textarea>
+    <p><button type="submit">Record</button></p>
+  </form>
+</div>
+
+{% if not items %}<p class="muted">No learnings recorded yet.</p>{% else %}
+{% for it in items %}
+<div class="card" style="margin-bottom:10px">
+  <span class="pill">{{ it.category }}</span>
+  <strong>{{ it.title }}</strong>
+  <span class="muted small">· {{ it.author }} · {{ it.created_at.strftime('%Y-%m-%d') }}
+    {% if it.linked_account %}· <a href="/accounts">{{ it.linked_account }}</a>{% endif %}</span>
+  <p class="small">{{ it.body }}</p>
+</div>
+{% endfor %}
+{% endif %}
+{% endblock %}

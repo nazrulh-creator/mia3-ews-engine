@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Data contract</h1>
+<p class="small muted">The monthly file (CSV or JSON) must carry these columns. Rows
+  missing a hard-required value are quarantined; defaultable gaps are filled and
+  reduce the account's confidence. The machine-readable version is at
+  <a href="/api/v1/contract">/api/v1/contract</a>.</p>
+
+{% for group, cols in [('Identity & roll-up', contract.identity),
+                       ('Risk-score inputs', contract.risk_score_inputs),
+                       ('Model features', contract.model_features)] %}
+<div class="card" style="margin-bottom:14px">
+  <h2>{{ group }}</h2>
+  <table>
+    <tr><th>Column</th><th>Type</th><th>Required</th><th>On missing</th>
+      <th>Default</th><th>Range</th><th>Description</th></tr>
+    {% for c in cols %}
+    <tr>
+      <td><code>{{ c.name }}</code></td>
+      <td>{{ c.type }}</td>
+      <td>{{ 'yes' if c.required else 'no' }}</td>
+      <td>{{ c.on_missing }}</td>
+      <td>{{ c.default if c.default is not none else '—' }}</td>
+      <td class="small">{% if c.min is not none or c.max is not none %}{{ c.min if c.min is not none else '−∞' }} … {{ c.max if c.max is not none else '∞' }}{% else %}—{% endif %}</td>
+      <td class="small">{{ c.description }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+</div>
+{% endfor %}
+<p class="small muted">Training/outcome label column (learnings only):
+  <code>{{ contract.label_column }}</code>.</p>
+{% endblock %}

@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m %}
+{% block content %}
+<p class="small"><a href="/accounts">&larr; All accounts</a></p>
+<h1>Account {{ score.account_id }} {{ m.band_badge(score.band) }}</h1>
+<p class="muted small">FI {{ score.fi_id }} ({{ score.fi_name or '—' }}) ·
+  {{ score.scheme }} / {{ score.sector }} · branch {{ score.branch or '—' }} ·
+  run {{ run.run_ref if run }}</p>
+
+<div class="row">
+  <div class="card" style="flex:1;min-width:340px">
+    <h2>How the band was reached <span class="muted small">(decision explainability)</span></h2>
+    <table>
+      <tr><th>Component</th><th class="right">Value</th><th class="right">Rank</th><th class="right">Weighted</th></tr>
+      <tr><td>Probability of MIA3 slip {{ m.info('probability') }}</td>
+        <td class="right">{{ (score.probability*100)|round(1) }}%</td>
+        <td class="right">{{ score.pd_rank }}</td>
+        <td class="right">{{ score.breakdown.w_pd }}×{{ score.pd_rank }} = {{ score.breakdown.pd_term }}</td></tr>
+      <tr><td>Exposure at Default {{ m.info('ead') }}</td>
+        <td class="right">{{ score.ead|money }}</td>
+        <td class="right">{{ score.ead_rank }}</td>
+        <td class="right">{{ score.breakdown.w_ead }}×{{ score.ead_rank }} = {{ score.breakdown.ead_term }}</td></tr>
+      <tr><td>Outstanding Ratio {{ m.info('outstanding_ratio') }}</td>
+        <td class="right">{{ (score.outstanding_ratio*100)|round(1) }}%</td>
+        <td class="right">{{ score.outratio_rank }}</td>
+        <td class="right">{{ score.breakdown.w_outratio }}×{{ score.outratio_rank }} = {{ score.breakdown.out_term }}</td></tr>
+      <tr><td><strong>Risk score</strong></td><td></td><td></td>
+        <td class="right"><strong>{{ score.risk_score }}</strong></td></tr>
+    </table>
+    <p class="small">Score {{ score.risk_score }} lands in
+      <strong style="color:{{ BAND_META[score.band].color }}">{{ score.band }}</strong>.
+      {{ BAND_META[score.band].definition }}</p>
+    <p><a href="/accounts/{{ score.id }}/report"><button class="secondary">Download case report (.docx)</button></a></p>
+  </div>
+
+  <div class="card" style="flex:1;min-width:340px">
+    <h2>Why the model flagged it <span class="muted small">(SHAP)</span></h2>
+    <p class="small">{{ score.explanation_operational }}</p>
+    {% set maxc = (score.top_factors | map(attribute='contribution') | map('abs') | max) or 1 %}
+    {% for f in score.top_factors %}
+    <div class="factor">
+      <span class="name">{{ f.label }} <span class="muted small">({{ f.feature }})</span></span>
+      <span class="bar" style="width:120px">
+        <span style="width:{{ (f.contribution|abs / maxc * 100)|round(0) }}%;
+          background:{{ '#c0392b' if f.contribution>0 else '#27ae60' }}"></span></span>
+      <span class="small {{ 'up' if f.contribution>0 else 'down' }}">{{ '%+.2f'|format(f.contribution) }}</span>
+    </div>
+    {% endfor %}
+    <details class="guided-only"><summary class="small">Technical view (validators)</summary>
+      <p class="small muted">{{ score.explanation_technical }}</p></details>
+    <p class="small">
+      {% if lime_result %}
+        <strong>{{ lime_result.label if lime_result.available else 'LIME' }}</strong>:
+        {% if lime_result.available %}
+          {% for w in lime_result.weights %}<span class="pill">{{ w[0] }} ({{ w[1]|round(3) }})</span> {% endfor %}
+        {% else %}{{ lime_result.reason }}{% endif %}
+      {% else %}<a href="/accounts/{{ score.id }}?lime=1">Run LIME challenger (diagnostic)</a>{% endif %}
+    </p>
+  </div>
+</div>
+
+<div class="card">
+  <h2>Confidence {{ m.info('confidence') }}: {{ score.confidence|round(0)|int }}/100
+    <span class="pill">{{ score.confidence_band }}</span></h2>
+  <div class="row">
+    {% for k, v in score.confidence_components.items() %}
+    <div style="min-width:160px">
+      <div class="small muted">{{ k.replace('_',' ') }}</div>
+      <div class="bar"><span style="width:{{ v|round(0) }}%;background:#46618f"></span></div>
+      <div class="small right">{{ v|round(0)|int }}</div>
+    </div>
+    {% endfor %}
+  </div>
+  <p class="small muted">Routing: <strong>{{ score.review_status.replace('_',' ') }}</strong>
+    {% if score.defaulted_fields %} · {{ score.defaulted_fields }} field(s) defaulted on input{% endif %}.</p>
+</div>
+
+{% if user.role in ['internal','branch'] and score.review_status != 'reviewed' %}
+<div class="card">
+  <h2>Record a review decision</h2>
+  <p class="small muted">A human override changes the treatment, not the model's number.
+    Both are recorded.</p>
+  <form method="post" action="/review/{{ score.id }}">
+    <div class="row">
+      <div><label>Decision</label>
+        <select name="decision"><option value="confirm">Confirm</option>
+          <option value="override">Override</option><option value="escalate">Escalate</option></select></div>
+      <div><label>Observed outcome (optional, for learning)</label>
+        <select name="observed_outcome"><option value="">—</option>
+          <option value="deteriorated">Deteriorated</option>
+          <option value="stable">Stayed stable</option></select></div>
+    </div>
+    <label>Reason (required for override)</label>
+    <textarea name="reason"></textarea>
+    <p><button type="submit">Submit decision</button></p>
+  </form>
+</div>
+{% elif score.review_status == 'reviewed' %}
+<div class="ok">A review decision has been recorded for this account.</div>
+{% endif %}
+{% endblock %}

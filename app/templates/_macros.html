@@ -1,0 +1,5 @@
+{% macro info(key) %}{% if field_help.get(key) %}<span class="info guided-only" title="{{ field_help[key] }}">i</span>{% endif %}{% endmacro %}
+
+{% macro band_badge(band) %}<span class="badge" style="background:{{ BAND_META[band].color }}">{{ band }}</span>{% endmacro %}
+
+{% macro band_dot(band) %}<span class="band-dot" style="background:{{ BAND_META[band].color }}"></span>{% endmacro %}

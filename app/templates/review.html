@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m %}
+{% block content %}
+<h1>Human review queue</h1>
+<p class="muted small">Borderline-confidence and elevated-risk accounts wait here.
+  This is the gate that keeps low precision from becoming unfair treatment while
+  the model calibrates.</p>
+{% if not items %}<div class="ok">Nothing waiting for review in the latest run.</div>{% else %}
+<table>
+  <tr><th>Account</th><th>FI</th><th class="right">Risk</th><th>Band</th>
+    <th class="right">Conf</th><th>Why</th><th></th></tr>
+  {% for s in items %}
+  <tr>
+    <td><a href="/accounts/{{ s.id }}">{{ s.account_id }}</a></td>
+    <td>{{ s.fi_id }}</td>
+    <td class="right"><strong>{{ s.risk_score }}</strong></td>
+    <td>{{ m.band_dot(s.band) }}{{ s.band }}</td>
+    <td class="right">{{ s.confidence|round(0)|int }} <span class="pill">{{ s.confidence_band }}</span></td>
+    <td class="small">{{ s.explanation_simplified }}</td>
+    <td><a class="small" href="/accounts/{{ s.id }}">Review &rarr;</a></td>
+  </tr>
+  {% endfor %}
+</table>
+{% endif %}
+{% endblock %}

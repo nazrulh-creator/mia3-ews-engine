@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m %}
+{% block content %}
+<h1>Prediction-radar tuning</h1>
+{% if error %}<div class="alert">{{ error }}</div>{% endif %}
+
+<div class="card">
+  <h2>Active risk-score settings</h2>
+  {% if active %}
+  <p>Weights {{ m.info('weights') }}: P(MIA3) <strong>{{ active.w_pd }}</strong> ·
+    EAD <strong>{{ active.w_ead }}</strong> · Outstanding <strong>{{ active.w_outratio }}</strong>.
+    Bands: Very High &gt; {{ active.t_very_high }} · High &ge; {{ active.t_high }} ·
+    Moderate &ge; {{ active.t_moderate }}. <span class="muted small">(v{{ active.version }},
+    approved by {{ active.approved_by }})</span></p>
+  {% else %}<p class="muted">Using built-in defaults.</p>{% endif %}
+</div>
+
+<div class="box">
+  <h2>Propose new settings</h2>
+  <p class="small muted">Preview the re-banding first, then submit for a second approver.
+    {{ m.info('weights') }}</p>
+  <form method="post" action="/tuning/threshold/preview">
+    <div class="row">
+      <div><label>Weight P(MIA3)</label><input name="w_pd" type="number" step="0.01" value="{{ active.w_pd if active else 0.5 }}"></div>
+      <div><label>Weight EAD</label><input name="w_ead" type="number" step="0.01" value="{{ active.w_ead if active else 0.3 }}"></div>
+      <div><label>Weight Outstanding</label><input name="w_outratio" type="number" step="0.01" value="{{ active.w_outratio if active else 0.2 }}"></div>
+    </div>
+    <div class="row">
+      <div><label>Very High &gt;</label><input name="t_very_high" type="number" step="0.1" value="{{ active.t_very_high if active else 3.5 }}"></div>
+      <div><label>High &ge;</label><input name="t_high" type="number" step="0.1" value="{{ active.t_high if active else 3.0 }}"></div>
+      <div><label>Moderate &ge;</label><input name="t_moderate" type="number" step="0.1" value="{{ active.t_moderate if active else 2.0 }}"></div>
+    </div>
+    <p><button class="secondary" type="submit">Preview re-banding</button></p>
+  </form>
+
+  {% if preview %}
+  <div class="warnbox">
+    <strong>Preview against {{ preview.run_ref or 'latest run' }}</strong> —
+    {{ preview.moved }} of {{ preview.n }} accounts would change band.
+    <table style="margin-top:8px">
+      <tr><th>Band</th><th class="right">Now</th><th class="right">After</th></tr>
+      {% for b in BANDS %}
+      <tr><td>{{ m.band_dot(b) }}{{ b }}</td>
+        <td class="right">{{ preview.before.get(b,0) }}</td>
+        <td class="right">{{ preview.after.get(b,0) }}</td></tr>
+      {% endfor %}
+    </table>
+  </div>
+  <form method="post" action="/tuning/threshold/propose">
+    {% set c = preview.proposed_cfg %}
+    <input type="hidden" name="w_pd" value="{{ c.w_pd }}"><input type="hidden" name="w_ead" value="{{ c.w_ead }}">
+    <input type="hidden" name="w_outratio" value="{{ c.w_outratio }}"><input type="hidden" name="t_very_high" value="{{ c.t_very_high }}">
+    <input type="hidden" name="t_high" value="{{ c.t_high }}"><input type="hidden" name="t_moderate" value="{{ c.t_moderate }}">
+    <label>Note / rationale</label><input name="note" placeholder="Why this change?">
+    <p><button type="submit">Submit proposal for approval</button></p>
+  </form>
+  {% endif %}
+</div>
+
+{% if proposed %}
+<div class="card">
+  <h2>Proposed — awaiting a second approver</h2>
+  <p class="small muted">Dual control: the proposer cannot approve their own change.</p>
+  <table>
+    <tr><th>Version</th><th>Weights</th><th>Bands</th><th>Proposed by</th><th>Note</th><th></th></tr>
+    {% for p in proposed %}
+    <tr><td>v{{ p.version }}</td>
+      <td class="small">{{ p.w_pd }}/{{ p.w_ead }}/{{ p.w_outratio }}</td>
+      <td class="small">{{ p.t_very_high }}/{{ p.t_high }}/{{ p.t_moderate }}</td>
+      <td>{{ p.created_by }}</td><td class="small">{{ p.note }}</td>
+      <td><form method="post" action="/tuning/threshold/approve" class="inline">
+        <input type="hidden" name="config_id" value="{{ p.id }}">
+        <button class="small">Approve &amp; activate</button></form></td></tr>
+    {% endfor %}
+  </table>
+</div>
+{% endif %}
+
+<div class="card">
+  <h2>Calibration {{ m.info('calibration') }}</h2>
+  <p class="small">Currently:
+    {% if cal_active %}<strong>{{ cal_active.method }}</strong> {{ cal_active.params }}
+    {% else %}<strong>uncalibrated</strong> (raw model output){% endif %}.</p>
+  <form method="post" action="/tuning/calibration/propose">
+    <div class="row">
+      <div><label>Method</label><select name="method">
+        <option value="identity">identity (none)</option>
+        <option value="linear">linear (a·p + b)</option>
+        <option value="platt">platt (logit scale/shift)</option></select></div>
+      <div><label>a</label><input name="a" type="number" step="0.01" value="1.0"></div>
+      <div><label>b</label><input name="b" type="number" step="0.01" value="0.0"></div>
+    </div>
+    <label>Note</label><input name="note" placeholder="Back-testing finding behind this calibration">
+    <p><button class="secondary" type="submit">Propose calibration</button></p>
+  </form>
+  {% if cal_proposed %}
+  <table style="margin-top:10px">
+    <tr><th>Version</th><th>Method</th><th>Params</th><th>By</th><th></th></tr>
+    {% for p in cal_proposed %}
+    <tr><td>v{{ p.version }}</td><td>{{ p.method }}</td><td class="small">{{ p.params }}</td>
+      <td>{{ p.created_by }}</td>
+      <td><form method="post" action="/tuning/calibration/approve" class="inline">
+        <input type="hidden" name="config_id" value="{{ p.id }}">
+        <button class="small">Approve</button></form></td></tr>
+    {% endfor %}
+  </table>
+  {% endif %}
+</div>
+{% endblock %}

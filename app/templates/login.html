@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="login-wrap">
+  <div class="card">
+    <div class="brand" style="margin-bottom:14px">
+      <span class="brand-mark">SDA</span>
+      <span class="brand-text"><strong>{{ settings.app_name }}</strong>
+        <small>Strategic Data Analytics</small></span>
+    </div>
+    {% if error %}<div class="alert">{{ error }}</div>{% endif %}
+    <form method="post" action="/login">
+      <label>Username</label>
+      <input name="username" autofocus required style="max-width:100%">
+      <label>Password</label>
+      <input name="password" type="password" required style="max-width:100%">
+      <p><button type="submit" style="width:100%">Sign in</button></p>
+    </form>
+    <p class="small muted">TEST environment · synthetic data only. Demo logins:
+      <code>internal/internal123</code>, <code>checker/checker123</code>,
+      <code>branch/branch123</code>, <code>fi_mbb/fi123</code>.</p>
+  </div>
+</div>
+{% endblock %}

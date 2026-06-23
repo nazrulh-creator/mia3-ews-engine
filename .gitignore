@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+env/
+*.egg-info/
+
+# Local databases & artifacts
+*.db
+*.sqlite
+*.sqlite3
+/data/runtime/
+/artifacts/*.pkl
+/artifacts/*.json
+!/artifacts/.gitkeep
+
+# Environment
+.env
+.env.local
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+
+# Generated demo data (regenerable)
+/data/synthetic/*.csv
+/data/synthetic/*.json

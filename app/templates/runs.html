@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Scoring runs</h1>
+{% if error %}<div class="alert">{{ error }}</div>{% endif %}
+
+<div class="box">
+  <h2>Run a new cycle</h2>
+  <p class="small muted">Default is a dropped file (CSV or JSON). The engine validates
+    columns against the <a href="/contract">data contract</a> before scoring, and
+    quarantines anything malformed.</p>
+  <form method="post" action="/runs/upload" enctype="multipart/form-data">
+    <label>Portfolio file (.csv / .json)</label>
+    <input type="file" name="file" accept=".csv,.json" required>
+    <label class="small"><input type="checkbox" name="hold" value="1" style="width:auto">
+      Hold results for sign-off before publishing (checkpoint)</label>
+    <p><button type="submit">Validate &amp; score</button></p>
+  </form>
+</div>
+
+<table>
+  <tr><th>Run</th><th>When</th><th>Source</th><th>Model</th>
+    <th class="right">In</th><th class="right">Scored</th><th class="right">Quarantined</th>
+    <th class="right">Accept %</th><th>Status</th><th></th></tr>
+  {% for r in rows %}
+  <tr id="{{ r.run_ref }}">
+    <td class="small">{{ r.run_ref }}</td>
+    <td class="small">{{ r.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+    <td>{{ r.source }}</td>
+    <td class="small">{{ r.model_version }}{% if r.calibrated %} · cal{% endif %}</td>
+    <td class="right">{{ r.rows_in }}</td>
+    <td class="right">{{ r.rows_scored }}</td>
+    <td class="right">{{ r.rows_quarantined }}</td>
+    <td class="right">{{ (r.quality_report.get('acceptance_rate',0)*100)|round(0)|int }}%</td>
+    <td>{% if r.published %}<span class="pill">published</span>
+      {% else %}<span class="tag-test">held</span>{% endif %}</td>
+    <td>{% if not r.published %}
+      <form method="post" action="/runs/publish/{{ r.id }}" class="inline">
+        <button class="secondary small">Publish</button></form>{% endif %}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% endblock %}

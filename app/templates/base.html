@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en" data-uimode="{{ user.ui_mode if user else 'guided' }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ settings.app_name }}{% block title %}{% endblock %}</title>
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body class="{{ 'env-live' if settings.is_live else 'env-test' }}">
+  {% if settings.env_watermark %}<div class="watermark">{{ settings.env_watermark }}</div>{% endif %}
+
+  <div class="envbar" style="background:{{ settings.banner_color }}">
+    {{ settings.environment }} ENVIRONMENT
+    {% if not settings.is_live %} · synthetic / de-identified data only{% endif %}
+  </div>
+
+  {% if user %}
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark">SDA</span>
+      <span class="brand-text">
+        <strong>{{ settings.app_name }}</strong>
+        <small>{{ settings.owner_team }} · a team within CGC Malaysia</small>
+      </span>
+    </div>
+    <div class="userbox">
+      <span class="who">{{ user.display_name }} · <em>{{ ROLE_LABELS[user.role] }}</em>
+        {% if user.fi_id %}({{ user.fi_id }}){% endif %}</span>
+      <form method="post" action="/ui-mode" class="inline">
+        <input type="hidden" name="mode" value="{{ 'compact' if user.ui_mode == 'guided' else 'guided' }}">
+        <button class="link" title="Guided shows all help; compact hides it.">
+          {{ 'Switch to compact' if user.ui_mode == 'guided' else 'Switch to guided' }}
+        </button>
+      </form>
+      <a class="link" href="/logout">Sign out</a>
+    </div>
+  </header>
+
+  <nav class="nav">
+    <a href="/dashboard">Dashboard</a>
+    {% if user.role == 'branch' %}<a href="/accounts?worklist=1">Worklist</a>
+    {% else %}<a href="/accounts">Accounts</a>{% endif %}
+    {% if user.role in ['internal','branch'] %}<a href="/review">Review</a>{% endif %}
+    {% if user.role == 'internal' %}
+      <a href="/runs">Runs</a><a href="/tuning">Tuning</a>
+      <a href="/models">Models</a><a href="/audit">Audit</a>
+    {% endif %}
+    <a href="/learnings">Learnings</a>
+    {% if user.role == 'internal' %}<a href="/demo">Demo</a>{% endif %}
+    <a href="/contract">Data contract</a>
+    {% if user.role in ['internal','fi'] %}<a href="/api/docs">API</a>{% endif %}
+  </nav>
+  {% endif %}
+
+  <main class="content">
+    {% if screen and purpose(screen) %}
+    <div class="purpose guided-only">
+      <span class="purpose-icon">ⓘ</span> {{ purpose(screen) }}
+    </div>
+    {% endif %}
+    {% block content %}{% endblock %}
+  </main>
+
+  {% if user %}
+  <footer class="foot">
+    <details class="report">
+      <summary>Report a problem</summary>
+      <form method="post" action="/report-problem">
+        <input type="hidden" name="screen" value="{{ screen or '' }}">
+        <textarea name="detail" required placeholder="What went wrong on this screen?"></textarea>
+        <button type="submit">Send report</button>
+        <small>Captures this screen, your user and the time, and links to the audit trail.</small>
+      </form>
+    </details>
+    <p class="disclaimer">An SDA-built internal tool. A flag is a prompt for human
+      attention, not an automated decision. Model in calibration — precision is
+      intentionally traded for recall.</p>
+  </footer>
+  {% endif %}
+</body>
+</html>
