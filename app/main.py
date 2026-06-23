@@ -13,7 +13,7 @@ from starlette.middleware.sessions import SessionMiddleware
 
 from app.config import BASE_DIR, get_settings
 from app.db.database import init_db, session_scope
-from app.routers import api, auth, review, tuning, views
+from app.routers import api, auth, guide, review, tuning, views
 from app.services.seed import ensure_seed
 
 settings = get_settings()
@@ -23,6 +23,7 @@ app.add_middleware(SessionMiddleware, secret_key=settings.secret_key, max_age=60
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "app" / "static")), name="static")
 
 app.include_router(auth.router)
+app.include_router(guide.router)
 app.include_router(views.router)
 app.include_router(review.router)
 app.include_router(tuning.router)

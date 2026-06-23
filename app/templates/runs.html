@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% import "_macros.html" as m %}
 {% block content %}
 <h1>Scoring runs</h1>
 {% if error %}<div class="alert">{{ error }}</div>{% endif %}
@@ -9,10 +10,10 @@
     columns against the <a href="/contract">data contract</a> before scoring, and
     quarantines anything malformed.</p>
   <form method="post" action="/runs/upload" enctype="multipart/form-data">
-    <label>Portfolio file (.csv / .json)</label>
+    <label>Portfolio file (.csv / .json) {{ m.info('upload_file') }}</label>
     <input type="file" name="file" accept=".csv,.json" required>
     <label class="small"><input type="checkbox" name="hold" value="1" style="width:auto">
-      Hold results for sign-off before publishing (checkpoint)</label>
+      Hold results for sign-off before publishing (checkpoint) {{ m.info('upload_hold') }}</label>
     <p><button type="submit">Validate &amp; score</button></p>
   </form>
 </div>

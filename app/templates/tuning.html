@@ -21,14 +21,14 @@
     {{ m.info('weights') }}</p>
   <form method="post" action="/tuning/threshold/preview">
     <div class="row">
-      <div><label>Weight P(MIA3)</label><input name="w_pd" type="number" step="0.01" value="{{ active.w_pd if active else 0.5 }}"></div>
-      <div><label>Weight EAD</label><input name="w_ead" type="number" step="0.01" value="{{ active.w_ead if active else 0.3 }}"></div>
-      <div><label>Weight Outstanding</label><input name="w_outratio" type="number" step="0.01" value="{{ active.w_outratio if active else 0.2 }}"></div>
+      <div><label>Weight P(MIA3) {{ m.info('w_pd') }}</label><input name="w_pd" type="number" step="0.01" value="{{ active.w_pd if active else 0.5 }}"></div>
+      <div><label>Weight EAD {{ m.info('w_ead') }}</label><input name="w_ead" type="number" step="0.01" value="{{ active.w_ead if active else 0.3 }}"></div>
+      <div><label>Weight Outstanding {{ m.info('w_outratio') }}</label><input name="w_outratio" type="number" step="0.01" value="{{ active.w_outratio if active else 0.2 }}"></div>
     </div>
     <div class="row">
-      <div><label>Very High &gt;</label><input name="t_very_high" type="number" step="0.1" value="{{ active.t_very_high if active else 3.5 }}"></div>
-      <div><label>High &ge;</label><input name="t_high" type="number" step="0.1" value="{{ active.t_high if active else 3.0 }}"></div>
-      <div><label>Moderate &ge;</label><input name="t_moderate" type="number" step="0.1" value="{{ active.t_moderate if active else 2.0 }}"></div>
+      <div><label>Very High &gt; {{ m.info('t_very_high') }}</label><input name="t_very_high" type="number" step="0.1" value="{{ active.t_very_high if active else 3.5 }}"></div>
+      <div><label>High &ge; {{ m.info('t_high') }}</label><input name="t_high" type="number" step="0.1" value="{{ active.t_high if active else 3.0 }}"></div>
+      <div><label>Moderate &ge; {{ m.info('t_moderate') }}</label><input name="t_moderate" type="number" step="0.1" value="{{ active.t_moderate if active else 2.0 }}"></div>
     </div>
     <p><button class="secondary" type="submit">Preview re-banding</button></p>
   </form>
@@ -51,7 +51,7 @@
     <input type="hidden" name="w_pd" value="{{ c.w_pd }}"><input type="hidden" name="w_ead" value="{{ c.w_ead }}">
     <input type="hidden" name="w_outratio" value="{{ c.w_outratio }}"><input type="hidden" name="t_very_high" value="{{ c.t_very_high }}">
     <input type="hidden" name="t_high" value="{{ c.t_high }}"><input type="hidden" name="t_moderate" value="{{ c.t_moderate }}">
-    <label>Note / rationale</label><input name="note" placeholder="Why this change?">
+    <label>Note / rationale {{ m.info('threshold_note') }}</label><input name="note" placeholder="Why this change?">
     <p><button type="submit">Submit proposal for approval</button></p>
   </form>
   {% endif %}
@@ -83,14 +83,14 @@
     {% else %}<strong>uncalibrated</strong> (raw model output){% endif %}.</p>
   <form method="post" action="/tuning/calibration/propose">
     <div class="row">
-      <div><label>Method</label><select name="method">
+      <div><label>Method {{ m.info('cal_method') }}</label><select name="method">
         <option value="identity">identity (none)</option>
         <option value="linear">linear (a·p + b)</option>
         <option value="platt">platt (logit scale/shift)</option></select></div>
-      <div><label>a</label><input name="a" type="number" step="0.01" value="1.0"></div>
-      <div><label>b</label><input name="b" type="number" step="0.01" value="0.0"></div>
+      <div><label>a {{ m.info('cal_a') }}</label><input name="a" type="number" step="0.01" value="1.0"></div>
+      <div><label>b {{ m.info('cal_b') }}</label><input name="b" type="number" step="0.01" value="0.0"></div>
     </div>
-    <label>Note</label><input name="note" placeholder="Back-testing finding behind this calibration">
+    <label>Note {{ m.info('cal_note') }}</label><input name="note" placeholder="Back-testing finding behind this calibration">
     <p><button class="secondary" type="submit">Propose calibration</button></p>
   </form>
   {% if cal_proposed %}

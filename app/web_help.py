@@ -55,6 +55,65 @@ FIELDS: Dict[str, str] = {
     "weights": "Component weights must sum to 1.00.",
     "calibration": "Maps raw model output onto observed reality. Defaults to "
                    "uncalibrated so nothing changes silently.",
+
+    # --- Data-entry fields (tooltips on every screen that takes input) -----
+    # Login
+    "login_username": "Your account name. Your role (internal / branch / FI) "
+                      "decides what you can see and do.",
+    "login_password": "Your password. Sessions expire after 8 hours of inactivity.",
+    # Runs — file upload
+    "upload_file": "The monthly portfolio file in CSV or JSON. It is validated "
+                   "against the data contract before any scoring happens; "
+                   "malformed rows are quarantined, never guessed.",
+    "upload_hold": "Tick to hold the results for sign-off (a checkpoint) instead "
+                   "of publishing them straight to the FI and branch views.",
+    # Tuning — weights
+    "w_pd": "Weight on the Probability-of-MIA3 rank. The three weights must "
+            "sum to 1.00. Deck default 0.50.",
+    "w_ead": "Weight on the Exposure-at-Default rank. Deck default 0.30.",
+    "w_outratio": "Weight on the Outstanding-ratio rank. Deck default 0.20.",
+    # Tuning — band cut-offs
+    "t_very_high": "Score strictly above this is Very High Risk. Deck default 3.5.",
+    "t_high": "Score at or above this (and ≤ Very-High cut-off) is High Risk. "
+              "Deck default 3.0.",
+    "t_moderate": "Score at or above this (and below High) is Moderate Risk; "
+                  "below it is Low Risk. Deck default 2.0.",
+    "threshold_note": "Why you are making this change. Stored on the audit trail "
+                      "with the before/after values.",
+    # Tuning — calibration
+    "cal_method": "identity = no change (raw output). linear = a·p + b. "
+                  "platt = scale/shift on the log-odds.",
+    "cal_a": "Slope/scale parameter for the calibration mapping.",
+    "cal_b": "Intercept/shift parameter for the calibration mapping.",
+    "cal_note": "The back-testing finding behind this calibration. Audited.",
+    # Review decision
+    "review_decision": "Confirm the model's call, Override it (treatment only — "
+                       "the model's number is unchanged), or Escalate.",
+    "review_outcome": "Optional: what actually happened to the account. Feeds the "
+                      "learnings evidence base for re-calibration.",
+    "review_reason": "Required when you override. Recorded with your decision.",
+    # Learnings
+    "learning_category": "Reviewer note / pattern, an observed outcome, or a "
+                         "model/threshold change with its reasoning.",
+    "learning_linked": "Optional account id this learning relates to.",
+    "learning_title": "A short, searchable headline for this learning.",
+    "learning_body": "The detail — what was learned and why it matters.",
+    # Universal problem reporting
+    "problem_detail": "Describe what went wrong. We auto-capture the screen, your "
+                      "user and the time, and link it to the audit trail.",
+}
+
+# Which screens take data entry, and which field tooltips each must expose —
+# used by the build-time check so no data-entry screen ships without tooltips.
+DATA_ENTRY_FIELDS: Dict[str, list] = {
+    "login": ["login_username", "login_password"],
+    "runs": ["upload_file", "upload_hold"],
+    "tuning": ["w_pd", "w_ead", "w_outratio", "t_very_high", "t_high",
+               "t_moderate", "threshold_note", "cal_method", "cal_a", "cal_b",
+               "cal_note"],
+    "account_detail": ["review_decision", "review_outcome", "review_reason"],
+    "learnings": ["learning_category", "learning_linked", "learning_title",
+                  "learning_body"],
 }
 
 
@@ -65,3 +124,16 @@ def purpose(screen: str) -> str:
 def verify_coverage() -> Dict[str, bool]:
     """Used by the help-coverage test: every screen must have a purpose."""
     return {k: bool(v and v.strip()) for k, v in SCREENS.items()}
+
+
+def verify_data_entry_tooltips() -> Dict[str, list]:
+    """Build-time check: every declared data-entry field must have a tooltip.
+
+    Returns {screen: [missing field keys]} — empty values mean full coverage.
+    """
+    missing: Dict[str, list] = {}
+    for screen, keys in DATA_ENTRY_FIELDS.items():
+        gaps = [k for k in keys if not FIELDS.get(k, "").strip()]
+        if gaps:
+            missing[screen] = gaps
+    return missing

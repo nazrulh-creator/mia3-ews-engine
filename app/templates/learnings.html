@@ -1,18 +1,19 @@
 {% extends "base.html" %}
+{% import "_macros.html" as m %}
 {% block content %}
 <h1>Learnings library</h1>
 <div class="box">
   <h2>Add a learning</h2>
   <form method="post" action="/learnings/add">
     <div class="row">
-      <div><label>Category</label><select name="category">
+      <div><label>Category {{ m.info('learning_category') }}</label><select name="category">
         <option value="note">Reviewer note / pattern</option>
         <option value="outcome">Observed outcome</option>
         <option value="change">Model / threshold change</option></select></div>
-      <div><label>Linked account (optional)</label><input name="linked_account"></div>
+      <div><label>Linked account (optional) {{ m.info('learning_linked') }}</label><input name="linked_account"></div>
     </div>
-    <label>Title</label><input name="title" required style="max-width:560px">
-    <label>Detail</label><textarea name="body" required></textarea>
+    <label>Title {{ m.info('learning_title') }}</label><input name="title" required style="max-width:560px">
+    <label>Detail {{ m.info('learning_body') }}</label><textarea name="body" required></textarea>
     <p><button type="submit">Record</button></p>
   </form>
 </div>

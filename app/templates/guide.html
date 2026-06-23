@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %} — User Guide{% endblock %}
+{% block content %}
+<div class="guide">
+  <aside class="guide-toc">
+    <div class="guide-toc-head">📖 User Guide</div>
+    <p class="small muted">MIA3 Early Warning Engine. Click a screen's “User guide”
+      link to jump straight to its section.</p>
+    <nav>
+      {% for t in toc %}
+      <a href="#{{ t.id }}"><span class="toc-num">{{ t.num }}</span> {{ t.title }}</a>
+      {% endfor %}
+    </nav>
+    <p class="small"><a href="/quickstart" target="_blank" rel="noopener">→ Quick start card</a></p>
+  </aside>
+
+  <article class="guide-body">
+    <header class="guide-hero">
+      <h1>MIA3 Early Warning Engine — User Guide</h1>
+      <p>A step-by-step, illustrated walkthrough of every screen in the engine.
+        Each section has a stable anchor, so the app can open the right part of this
+        guide directly from the screen you are on.</p>
+      <p class="small muted">Smoke-detector for the guaranteed portfolio ·
+        human-on-the-loop · fully auditable · Strategic Data Analytics</p>
+    </header>
+
+    {% for s in sections %}
+    <section id="{{ s.id }}" class="guide-section">
+      <h2><span class="sec-num">{{ s.num }}</span> {{ s.title }}
+        <a class="sec-anchor" href="#{{ s.id }}" title="Link to this section">¶</a></h2>
+      {{ s.body | safe }}
+    </section>
+    {% endfor %}
+    <p class="small muted">User Guide · MIA3 Early Warning Engine · companion to the
+      Build &amp; Deployment Plan and the MicroFlex adaptation.</p>
+  </article>
+</div>
+{% endblock %}

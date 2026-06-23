@@ -49,13 +49,21 @@
     {% if user.role == 'internal' %}<a href="/demo">Demo</a>{% endif %}
     <a href="/contract">Data contract</a>
     {% if user.role in ['internal','fi'] %}<a href="/api/docs">API</a>{% endif %}
+    <span class="nav-spacer"></span>
+    <a href="/guide" target="_blank" rel="noopener" class="nav-help">📖 Guide</a>
+    <a href="/quickstart" target="_blank" rel="noopener" class="nav-help">Quick start</a>
   </nav>
   {% endif %}
 
   <main class="content">
-    {% if screen and purpose(screen) %}
-    <div class="purpose guided-only">
-      <span class="purpose-icon">ⓘ</span> {{ purpose(screen) }}
+    {% if screen %}
+    <div class="purpose">
+      {% if purpose(screen) %}
+      <span class="guided-only"><span class="purpose-icon">ⓘ</span> {{ purpose(screen) }}</span>
+      {% endif %}
+      <a class="guide-link" target="_blank" rel="noopener"
+         href="{% if user %}/guide?screen={{ screen }}{% else %}/quickstart{% endif %}">
+        📖 User guide for this page →</a>
     </div>
     {% endif %}
     {% block content %}{% endblock %}
@@ -67,6 +75,8 @@
       <summary>Report a problem</summary>
       <form method="post" action="/report-problem">
         <input type="hidden" name="screen" value="{{ screen or '' }}">
+        <label class="small">Describe the problem
+          <span class="info" title="{{ field_help['problem_detail'] }}">i</span></label>
         <textarea name="detail" required placeholder="What went wrong on this screen?"></textarea>
         <button type="submit">Send report</button>
         <small>Captures this screen, your user and the time, and links to the audit trail.</small>

@@ -82,15 +82,15 @@
     Both are recorded.</p>
   <form method="post" action="/review/{{ score.id }}">
     <div class="row">
-      <div><label>Decision</label>
+      <div><label>Decision {{ m.info('review_decision') }}</label>
         <select name="decision"><option value="confirm">Confirm</option>
           <option value="override">Override</option><option value="escalate">Escalate</option></select></div>
-      <div><label>Observed outcome (optional, for learning)</label>
+      <div><label>Observed outcome (optional, for learning) {{ m.info('review_outcome') }}</label>
         <select name="observed_outcome"><option value="">—</option>
           <option value="deteriorated">Deteriorated</option>
           <option value="stable">Stayed stable</option></select></div>
     </div>
-    <label>Reason (required for override)</label>
+    <label>Reason (required for override) {{ m.info('review_reason') }}</label>
     <textarea name="reason"></textarea>
     <p><button type="submit">Submit decision</button></p>
   </form>

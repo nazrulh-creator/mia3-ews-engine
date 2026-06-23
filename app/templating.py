@@ -7,6 +7,7 @@ from app.config import BASE_DIR, get_settings
 from app.core.scoring import BAND_META, BANDS
 from app.auth.deps import ROLE_LABELS
 from app import web_help
+from app import guide_content
 
 templates = Jinja2Templates(directory=str(BASE_DIR / "app" / "templates"))
 
@@ -18,6 +19,7 @@ templates.env.globals.update(
     ROLE_LABELS=ROLE_LABELS,
     purpose=web_help.purpose,
     field_help=web_help.FIELDS,
+    guide_anchor=guide_content.section_for_screen,
 )
 
 

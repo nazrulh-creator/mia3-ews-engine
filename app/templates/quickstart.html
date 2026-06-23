@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %} — Quick Start{% endblock %}
+{% block content %}
+<div class="qs">
+  <div class="qs-hero">
+    <h1>MIA3 Early Warning Engine — Quick Start</h1>
+    <p>Smoke-detector for the guaranteed portfolio · human-on-the-loop · fully auditable</p>
+  </div>
+
+  <div class="qs-grid">
+    <div class="qs-card">
+      <h3>1 · Open it &amp; sign in</h3>
+      <ul>
+        <li>Hosted: <code>mia3-ews-engine-test.fly.dev</code> (first load wakes the server, ~3–5s).</li>
+        <li>Local: <code>uvicorn app.main:app</code> → <code>127.0.0.1:8080</code>.</li>
+        <li>Demo logins (TEST, synthetic): <code>internal/internal123</code>,
+          <code>checker/checker123</code>, <code>branch/branch123</code>, <code>fi_mbb/fi123</code>.</li>
+      </ul>
+    </div>
+
+    <div class="qs-card">
+      <h3>5 · The flow</h3>
+      <p class="small">Data arrives → validated against the contract → model scores
+        P(MIA3) → risk score <b>0.5/0.3/0.2</b> → four bands → confidence routing →
+        three role-based views.</p>
+      <p class="small">Risk bands:
+        <span class="badge" style="background:#27ae60">Low &lt;2.0</span>
+        <span class="badge" style="background:#f1c40f">Mod 2–3</span>
+        <span class="badge" style="background:#e67e22">High 3–3.5</span>
+        <span class="badge" style="background:#c0392b">V.High &gt;3.5</span></p>
+    </div>
+
+    <div class="qs-card">
+      <h3>2 · Environments — check the colour</h3>
+      <ul>
+        <li><span class="badge" style="background:#1f8f4e">LIVE</span> green bar — real monitoring.</li>
+        <li><span class="badge" style="background:#d98a00">TEST</span> amber bar + watermark + <code>TEST-</code> ids — synthetic sandbox.</li>
+        <li>Separate databases; test data never reaches LIVE.</li>
+      </ul>
+    </div>
+
+    <div class="qs-card">
+      <h3>6 · Governed settings (dual control)</h3>
+      <ul>
+        <li>The 50/30/20 weights and band cut-offs are <b>governed parameters</b>, not hardcoded.</li>
+        <li>Changing one <b>previews the re-banding</b>, then needs a <b>second approver</b>.</li>
+        <li>Calibration defaults to <b>uncalibrated</b> so nothing changes silently.</li>
+      </ul>
+    </div>
+
+    <div class="qs-card">
+      <h3>3 · Your first look (30 seconds)</h3>
+      <ol>
+        <li>Sign in as <code>internal</code>.</li>
+        <li><b>Demo → Generate &amp; score demo portfolio.</b></li>
+        <li>Open the <b>Dashboard</b> — read the band cards and the by-FI / by-sector tables.</li>
+        <li>Click a total → open an account → read its explanation and arithmetic.</li>
+      </ol>
+    </div>
+
+    <div class="qs-card">
+      <h3>7 · Safety rails</h3>
+      <ul>
+        <li>Precision is ~0.49 by design — <b>every high-risk flag goes to a human</b>, never an automated action.</li>
+        <li>Borderline-confidence cases are <b>held for review</b>.</li>
+        <li>Every step is written to an <b>append-only, hash-chained</b> audit trail.</li>
+      </ul>
+    </div>
+
+    <div class="qs-card">
+      <h3>4 · What MIA3 does</h3>
+      <p class="small">It watches loans already on the book and scores monthly which are
+        likely to slip into <b>Months-in-Arrears 3</b>, then ranks them by potential
+        impact so attention goes where it matters most. (MicroFlex decides new loans;
+        MIA3 monitors existing ones.)</p>
+    </div>
+
+    <div class="qs-card">
+      <h3>8 · Get help</h3>
+      <ul>
+        <li>Click <b>📖 User guide for this page</b> in any screen's banner for that screen's section.</li>
+        <li>Open the <b>📖 Guide</b> link in the top nav any time.</li>
+        <li>Hover the <span class="info">i</span> icons on form fields for tooltips.</li>
+        <li>Toggle <b>guided / compact</b> in the header to show or hide help.</li>
+      </ul>
+    </div>
+  </div>
+  <p class="small muted" style="text-align:center">Strategic Data Analytics · MIA3 Early
+    Warning Engine · companion to the full <a href="/guide" target="_blank" rel="noopener">User Guide</a>.</p>
+</div>
+{% endblock %}
