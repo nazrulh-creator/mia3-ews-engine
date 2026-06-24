@@ -143,3 +143,10 @@ ul.g-seen li{margin:5px 0}
 .card details:last-child{border-bottom:none}
 .card details summary{cursor:pointer;font-weight:600;color:var(--sda)}
 .card details p{margin:8px 0 2px}
+
+/* ---- Custom tooltip bubble (JS-positioned, never clipped) ---- */
+.tip-bubble{position:fixed;display:none;z-index:1000;max-width:280px;background:#1f2430;
+  color:#fff;padding:8px 11px;border-radius:8px;font-size:12px;line-height:1.45;font-weight:400;
+  box-shadow:0 6px 20px rgba(0,0,0,.22);pointer-events:none;opacity:0;transition:opacity .08s}
+.info{cursor:help;outline:none}
+.info:focus{box-shadow:0 0 0 2px var(--sda-2)}

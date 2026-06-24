@@ -76,7 +76,7 @@
       <form method="post" action="/report-problem">
         <input type="hidden" name="screen" value="{{ screen or '' }}">
         <label class="small">Describe the problem
-          <span class="info" title="{{ field_help['problem_detail'] }}">i</span></label>
+          <span class="info" data-tip="{{ field_help['problem_detail'] }}" tabindex="0">i</span></label>
         <textarea name="detail" required placeholder="What went wrong on this screen?"></textarea>
         <button type="submit">Send report</button>
         <small>Captures this screen, your user and the time, and links to the audit trail.</small>
@@ -87,5 +87,6 @@
       intentionally traded for recall.</p>
   </footer>
   {% endif %}
+  <script src="/static/tooltip.js"></script>
 </body>
 </html>
