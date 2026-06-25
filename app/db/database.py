@@ -28,7 +28,10 @@ class Base(DeclarativeBase):
 # Columns added after an environment's DB was first created. Kept tiny and
 # additive — create_all never adds columns to an existing table, so we ALTER.
 _ADDITIVE_COLUMNS = {
-    "model_registry": [("registered_by", "VARCHAR(64)")],
+    "model_registry": [("registered_by", "VARCHAR(64)"),
+                       ("segment", "VARCHAR(16) DEFAULT 'Guarantee'")],
+    "account_scores": [("segment", "VARCHAR(16) DEFAULT 'Guarantee'"),
+                       ("model_version", "VARCHAR(64)")],
 }
 
 

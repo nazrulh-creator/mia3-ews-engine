@@ -179,14 +179,23 @@ def approve_calibration(db: Session, *, approver: str, config_id: int) -> Calibr
     return row
 
 
-# --- Model registry --------------------------------------------------------
-def active_model_row(db: Session) -> Optional[ModelRegistry]:
-    return db.execute(select(ModelRegistry).where(ModelRegistry.status == "active")).scalars().first()
+# --- Model registry (one active model per segment) -------------------------
+def active_model_row(db: Session, segment: Optional[str] = None) -> Optional[ModelRegistry]:
+    stmt = select(ModelRegistry).where(ModelRegistry.status == "active")
+    if segment is not None:
+        stmt = stmt.where(ModelRegistry.segment == segment)
+    return db.execute(stmt).scalars().first()
 
 
-def active_model_path(db: Session):
-    """Artifact path of the active registry entry, or None (→ synthetic)."""
-    row = active_model_row(db)
+def active_models_by_segment(db: Session) -> Dict[str, ModelRegistry]:
+    """{segment: active ModelRegistry} across all segments."""
+    rows = db.execute(select(ModelRegistry).where(ModelRegistry.status == "active")).scalars().all()
+    return {r.segment: r for r in rows}
+
+
+def active_model_path(db: Session, segment: Optional[str] = None):
+    """Artifact path of the active registry entry for a segment, or None."""
+    row = active_model_row(db, segment)
     if row and row.artifact_path:
         return Path(row.artifact_path)
     return None
@@ -196,21 +205,21 @@ def register_model(db: Session, *, actor: str, name: str, version: str, kind: st
                    is_synthetic: bool, artifact_path: Optional[str],
                    auc: Optional[float], recall: Optional[float],
                    precision: Optional[float], fn_rate: Optional[float],
-                   notes: str) -> ModelRegistry:
+                   notes: str, segment: str = "Guarantee") -> ModelRegistry:
     """Maker registers a new model version as a draft (not yet live)."""
     if not name or not version:
         raise GovernanceError("Name and version are required.")
     clash = db.execute(select(ModelRegistry).where(ModelRegistry.version == version)).scalars().first()
     if clash:
         raise GovernanceError(f"Version '{version}' already exists in the registry.")
-    row = ModelRegistry(name=name, version=version, kind=kind, is_synthetic=is_synthetic,
-                        artifact_path=artifact_path or None, status="draft",
-                        auc=auc, recall=recall, precision=precision, fn_rate=fn_rate,
-                        notes=notes or None, registered_by=actor)
+    row = ModelRegistry(name=name, version=version, segment=segment, kind=kind,
+                        is_synthetic=is_synthetic, artifact_path=artifact_path or None,
+                        status="draft", auc=auc, recall=recall, precision=precision,
+                        fn_rate=fn_rate, notes=notes or None, registered_by=actor)
     db.add(row)
     db.flush()
     audit.record(db, actor=actor, action="model.register", entity_type="model",
-                 entity_id=version, after={"name": name, "kind": kind,
+                 entity_id=version, after={"name": name, "segment": segment, "kind": kind,
                  "artifact": artifact_path, "is_synthetic": is_synthetic}, detail=notes or None)
     return row
 
@@ -246,7 +255,8 @@ def activate_model(db: Session, *, approver: str, model_id: int) -> ModelRegistr
     ok, message = model_core.validate_artifact(Path(row.artifact_path) if row.artifact_path else None)
     if not ok:
         raise GovernanceError(f"Cannot activate — artifact failed validation: {message}")
-    previous = active_model_row(db)
+    # Retire only the previously-active model for the SAME segment.
+    previous = active_model_row(db, row.segment)
     before = {"version": previous.version} if previous else None
     if previous and previous.id != row.id:
         previous.status = "retired"
@@ -258,8 +268,8 @@ def activate_model(db: Session, *, approver: str, model_id: int) -> ModelRegistr
     model_core.reset_model_cache()  # next scoring run loads the newly active model
     audit.record(db, actor=approver, action="model.activate", entity_type="model",
                  entity_id=row.version, before=before,
-                 after={"version": row.version, "validation": message},
-                 detail=f"Activated {row.name} {row.version}.")
+                 after={"segment": row.segment, "version": row.version, "validation": message},
+                 detail=f"Activated {row.name} {row.version} for {row.segment}.")
     return row
 
 

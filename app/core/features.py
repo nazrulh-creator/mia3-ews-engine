@@ -35,11 +35,20 @@ class Column:
     maximum: Optional[float] = None
 
 
+# Portfolio segments — each scored by its own governed model (deck: separate
+# Guarantee and Financing model performance).
+SEGMENTS: List[str] = ["Guarantee", "Financing"]
+DEFAULT_SEGMENT = "Guarantee"
+
 # --- Identity / roll-up columns -------------------------------------------
 IDENTITY_COLUMNS: List[Column] = [
     Column("account_id", "str", True, "Unique account / application number."),
     Column("fi_id", "str", True, "Financial institution code (row-level access key)."),
     Column("fi_name", "str", False, "Financial institution display name.", on_missing="default", default=None),
+    Column("segment", "str", False,
+           "Portfolio segment — Guarantee or Financing. Routes the account to "
+           "its segment's model. Defaults to Guarantee if absent.",
+           on_missing="default", default=DEFAULT_SEGMENT),
     Column("scheme", "str", True, "Guarantee scheme code."),
     Column("sector", "str", True, "Economic sector."),
     Column("branch", "str", False, "Originating CGC branch.", on_missing="default", default=None),

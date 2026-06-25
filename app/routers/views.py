@@ -41,12 +41,13 @@ def dashboard(request: Request, user: User = Depends(require_user),
               db: Session = Depends(get_db)):
     scope = fi_scope(user)
     run = runs.latest_run(db)
-    counts, by_fi, by_scheme, by_sector, alerts = {}, [], [], [], []
+    counts, by_fi, by_scheme, by_sector, by_segment, alerts = {}, [], [], [], [], []
     if run:
         counts = runs.band_counts(db, run.id, fi_id=scope)
         by_fi = runs.breakdown(db, run.id, "fi_id", fi_id=scope)
         by_scheme = runs.breakdown(db, run.id, "scheme", fi_id=scope)
         by_sector = runs.breakdown(db, run.id, "sector", fi_id=scope)
+        by_segment = runs.breakdown(db, run.id, "segment", fi_id=scope)
         alerts = db.execute(select(PortfolioAlert).where(PortfolioAlert.run_ref == run.run_ref)
                             ).scalars().all()
         if scope:
@@ -54,15 +55,16 @@ def dashboard(request: Request, user: User = Depends(require_user),
     trend = runs.trend(db, fi_id=scope)
     return templates.TemplateResponse("dashboard.html", _ctx(
         request, user, "dashboard", run=run, counts=counts, by_fi=by_fi,
-        by_scheme=by_scheme, by_sector=by_sector, alerts=alerts, trend=trend))
+        by_scheme=by_scheme, by_sector=by_sector, by_segment=by_segment,
+        alerts=alerts, trend=trend))
 
 
 # --- Accounts list + worklist ---------------------------------------------
 @router.get("/accounts", response_class=HTMLResponse)
 def accounts(request: Request, band: Optional[str] = None, fi: Optional[str] = None,
              scheme: Optional[str] = None, sector: Optional[str] = None,
-             worklist: int = 0, user: User = Depends(require_user),
-             db: Session = Depends(get_db)):
+             segment: Optional[str] = None, worklist: int = 0,
+             user: User = Depends(require_user), db: Session = Depends(get_db)):
     scope = fi_scope(user)
     run = runs.latest_run(db)
     rows = []
@@ -78,6 +80,8 @@ def accounts(request: Request, band: Optional[str] = None, fi: Optional[str] = N
             stmt = stmt.where(AccountScore.scheme == scheme)
         if sector:
             stmt = stmt.where(AccountScore.sector == sector)
+        if segment:
+            stmt = stmt.where(AccountScore.segment == segment)
         if worklist:
             stmt = stmt.where(AccountScore.review_status.in_(["needs_review", "fast_track"]))
         stmt = stmt.order_by(AccountScore.risk_score.desc()).limit(500)
@@ -85,7 +89,8 @@ def accounts(request: Request, band: Optional[str] = None, fi: Optional[str] = N
     screen = "worklist" if worklist else "accounts"
     return templates.TemplateResponse("accounts.html", _ctx(
         request, user, screen, rows=rows, run=run, worklist=worklist,
-        filters={"band": band, "fi": fi, "scheme": scheme, "sector": sector}))
+        filters={"band": band, "fi": fi, "scheme": scheme, "sector": sector,
+                 "segment": segment}))
 
 
 @router.get("/accounts/{score_id}", response_class=HTMLResponse)

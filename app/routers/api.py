@@ -73,8 +73,8 @@ def get_account(account_id: str, user: User = Depends(require_user),
 
 def _account_json(r: AccountScore, detail: bool = False) -> dict:
     out = {
-        "account_id": r.account_id, "fi_id": r.fi_id, "scheme": r.scheme,
-        "sector": r.sector, "probability": r.probability, "ead": r.ead,
+        "account_id": r.account_id, "fi_id": r.fi_id, "segment": r.segment,
+        "scheme": r.scheme, "sector": r.sector, "probability": r.probability, "ead": r.ead,
         "outstanding_ratio": r.outstanding_ratio, "risk_score": r.risk_score,
         "band": r.band, "confidence": r.confidence, "review_status": r.review_status,
     }

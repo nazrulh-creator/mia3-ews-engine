@@ -10,6 +10,10 @@
     <div><label>Band {{ m.info('band') }}</label>
       <select name="band"><option value="">All</option>
         {% for b in BANDS %}<option {{ 'selected' if filters.band==b }}>{{ b }}</option>{% endfor %}</select></div>
+    <div><label>Segment</label>
+      <select name="segment"><option value="">All</option>
+        <option {{ 'selected' if filters.segment=='Guarantee' }}>Guarantee</option>
+        <option {{ 'selected' if filters.segment=='Financing' }}>Financing</option></select></div>
     <div><label>Scheme</label><input name="scheme" value="{{ filters.scheme or '' }}"></div>
     <div><label>Sector</label><input name="sector" value="{{ filters.sector or '' }}"></div>
     <div style="align-self:flex-end"><button type="submit">Filter</button></div>
@@ -20,7 +24,7 @@
 <p class="muted small">{{ rows|length }} account(s){% if rows|length==500 %} (showing first 500){% endif %}.</p>
 <table>
   <tr>
-    <th>Account</th><th>FI</th><th>Scheme / Sector</th>
+    <th>Account</th><th>FI</th><th>Segment</th><th>Scheme / Sector</th>
     <th class="right">P(MIA3) {{ m.info('probability') }}</th>
     <th class="right">EAD {{ m.info('ead') }}</th>
     <th class="right">Risk {{ m.info('risk_score') }}</th>
@@ -32,6 +36,7 @@
   <tr>
     <td><a href="/accounts/{{ r.id }}">{{ r.account_id }}</a></td>
     <td>{{ r.fi_id }}</td>
+    <td><span class="pill">{{ r.segment }}</span></td>
     <td class="small">{{ r.scheme }} / {{ r.sector }}</td>
     <td class="right">{{ (r.probability*100)|round(1) }}%</td>
     <td class="right">{{ r.ead|money }}</td>

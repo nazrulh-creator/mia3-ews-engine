@@ -103,6 +103,9 @@ FIELDS: Dict[str, str] = {
     "problem_detail": "Describe what went wrong. We auto-capture the screen, your "
                       "user and the time, and link it to the audit trail.",
     # Model registry — register / edit
+    "model_segment": "Which portfolio this model scores — Guarantee or Financing. "
+                     "One model is active per segment, and accounts are routed to "
+                     "their segment's model.",
     "model_name": "A human-readable model name, e.g. 'MIA3 XGBoost'.",
     "model_version": "A unique version string, e.g. '2026-Q2'. Two entries cannot "
                      "share a version.",
@@ -129,9 +132,9 @@ DATA_ENTRY_FIELDS: Dict[str, list] = {
     "account_detail": ["review_decision", "review_outcome", "review_reason"],
     "learnings": ["learning_category", "learning_linked", "learning_title",
                   "learning_body"],
-    "models": ["model_name", "model_version", "model_kind", "model_artifact",
-               "model_auc", "model_recall", "model_precision", "model_fn",
-               "model_notes"],
+    "models": ["model_name", "model_version", "model_segment", "model_kind",
+               "model_artifact", "model_auc", "model_recall", "model_precision",
+               "model_fn", "model_notes"],
 }
 
 

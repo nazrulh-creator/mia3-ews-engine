@@ -14,7 +14,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from app.config import BASE_DIR, get_settings
 from app.db.database import init_db, session_scope
 from app.routers import api, auth, guide, models, review, tuning, views
-from app.services.seed import ensure_seed
+from app.services.seed import ensure_seed, ensure_segment_models
 
 settings = get_settings()
 app = FastAPI(title=settings.app_name, docs_url="/api/docs", openapi_url="/api/openapi.json")
@@ -36,6 +36,7 @@ def _startup() -> None:
     init_db()
     with session_scope() as db:
         ensure_seed(db)
+        ensure_segment_models(db)
 
 
 @app.get("/healthz")

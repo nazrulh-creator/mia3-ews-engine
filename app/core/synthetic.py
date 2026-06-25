@@ -53,6 +53,7 @@ def _account(rng: np.random.RandomState, i: int, as_of: str) -> Dict[str, object
     return {
         "account_id": f"AC-{i:06d}",
         "fi_id": fi_id, "fi_name": fi_name,
+        "segment": "Financing" if rng.random_sample() < 0.25 else "Guarantee",
         "scheme": SCHEMES[rng.randint(len(SCHEMES))],
         "sector": SECTORS[rng.randint(len(SECTORS))],
         "branch": BRANCHES[rng.randint(len(BRANCHES))],
@@ -84,7 +85,7 @@ def generate_portfolio(n: int = 400, seed: int = 42,
 def boundary_cases(as_of: str = "2026-06-01") -> pd.DataFrame:
     """The five teaching edge cases. The malformed row is intentionally bad."""
     base = {
-        "fi_id": "MBB", "fi_name": "Maybank", "scheme": "MicroFlex",
+        "fi_id": "MBB", "fi_name": "Maybank", "segment": "Guarantee", "scheme": "MicroFlex",
         "sector": "Retail", "branch": "KL-Sentral", "as_of_date": as_of,
         "prev_delinquency_count": 1, "arrears_movement_trend": 0,
         "cost_to_income_ratio": 0.7, "profit_margin": 0.05,
@@ -103,13 +104,13 @@ def boundary_cases(as_of: str = "2026-06-01") -> pd.DataFrame:
     rows.append(dict(hi, account_id="HIPROB-LOWEXP", ead=20_000, outstanding_ratio=0.1,
                      outstanding_amount=20_000))
     # 3. Low-probability / very-high-exposure.
-    rows.append(dict(lo, account_id="LOPROB-HIEXP", ead=800_000, outstanding_ratio=0.95,
-                     outstanding_amount=800_000, utilization_ratio=0.95))
+    rows.append(dict(lo, account_id="LOPROB-HIEXP", segment="Financing", ead=800_000,
+                     outstanding_ratio=0.95, outstanding_amount=800_000, utilization_ratio=0.95))
     # 4. Borderline-confidence — elevated risk but several inputs missing
     #    (left blank so they default and depress completeness/quality).
     rows.append({
         "account_id": "BORDERLINE-CONF", "fi_id": "CIMB", "fi_name": "CIMB Bank",
-        "scheme": "SME-Plus", "sector": "Construction", "branch": "JB",
+        "segment": "Financing", "scheme": "SME-Plus", "sector": "Construction", "branch": "JB",
         "as_of_date": as_of, "ead": 260_000, "outstanding_ratio": 0.7,
         "mia": 2, "outstanding_amount": 260_000, "utilization_ratio": 0.85,
         # deliberately omitted: prev_delinquency_count, arrears_movement_trend,
@@ -120,7 +121,7 @@ def boundary_cases(as_of: str = "2026-06-01") -> pd.DataFrame:
     # 5. Malformed — missing required EAD; must be quarantined.
     rows.append({
         "account_id": "MALFORMED-001", "fi_id": "RHB", "fi_name": "RHB Bank",
-        "scheme": "TradeGuarantee", "sector": "Services", "branch": "Penang",
+        "segment": "Guarantee", "scheme": "TradeGuarantee", "sector": "Services", "branch": "Penang",
         "as_of_date": as_of, "ead": None, "outstanding_ratio": 0.5,
         "mia": 1, "outstanding_amount": 100_000, "utilization_ratio": 0.5,
     })

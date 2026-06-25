@@ -329,8 +329,9 @@ calibration on the <b>Tuning</b> screen. Nothing changes on one person's say-so.
 
     {"id": "models", "num": "13", "title": "The model registry", "body": f"""
 <p>The <b>Models</b> screen is where internal-risk users register, edit, swap and
-retire model versions. The scoring engine only ever uses the <b>active</b> entry's
-artifact — never a draft.</p>
+retire model versions. There is <b>one active model per segment</b> — Guarantee and
+Financing each have their own — and every account is routed to its segment's model.
+The scoring engine only ever uses the <b>active</b> entry — never a draft.</p>
 {DUAL_CONTROL_SVG}
 {_seen(
  "The <b>live model</b> card — the active version, its metrics, and a <b>Retire</b> button.",

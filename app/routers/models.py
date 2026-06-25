@@ -37,7 +37,7 @@ def _to_float(v: str) -> Optional[float]:
 
 def _render(request: Request, user: User, db: Session, *, error=None, ok=None, status_code=200):
     rows = db.execute(select(ModelRegistry).order_by(ModelRegistry.created_at.desc())).scalars().all()
-    active = governance.active_model_row(db)
+    active = governance.active_models_by_segment(db)  # {segment: row}
     # Pre-flight validation hint for entries that carry an artifact path.
     validations = {}
     for r in rows:
@@ -58,8 +58,8 @@ def models_page(request: Request, user: User = Depends(require_internal),
 
 @router.post("/models/register")
 async def register(request: Request, name: str = Form(...), version: str = Form(...),
-                   kind: str = Form("real"), artifact_path: str = Form(""),
-                   file: Optional[UploadFile] = File(None),
+                   segment: str = Form("Guarantee"), kind: str = Form("real"),
+                   artifact_path: str = Form(""), file: Optional[UploadFile] = File(None),
                    auc: str = Form(""), recall: str = Form(""),
                    precision: str = Form(""), fn_rate: str = Form(""),
                    notes: str = Form(""), user: User = Depends(require_internal),
@@ -75,7 +75,7 @@ async def register(request: Request, name: str = Form(...), version: str = Form(
     try:
         governance.register_model(
             db, actor=user.username, name=name.strip(), version=version.strip(),
-            kind=kind, is_synthetic=is_synthetic, artifact_path=path,
+            segment=segment, kind=kind, is_synthetic=is_synthetic, artifact_path=path,
             auc=_to_float(auc), recall=_to_float(recall),
             precision=_to_float(precision), fn_rate=_to_float(fn_rate), notes=notes)
         db.commit()

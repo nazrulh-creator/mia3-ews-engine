@@ -8,25 +8,28 @@
   governed path to register, edit, swap or retire one. The scoring engine only ever
   uses the <b>active</b> entry's artifact — never a draft.</p>
 
-{% if active %}
 <div class="card">
-  <h2>Live model</h2>
-  <p><strong>{{ active.name }}</strong> <span class="pill">{{ active.version }}</span>
-    {% if active.is_synthetic %}<span class="tag-test">synthetic stand-in</span>{% endif %}
-    — AUC {{ active.auc if active.auc is not none else '—' }},
-    Recall {{ active.recall if active.recall is not none else '—' }},
-    Precision {{ active.precision if active.precision is not none else '—' }}.
-    {% if active.artifact_path %}<br><span class="small muted">artifact: <code>{{ active.artifact_path }}</code></span>{% endif %}
-  </p>
-  <form method="post" action="/models/retire" class="inline"
-        onsubmit="return confirm('Retire the live model? Scoring falls back to the synthetic stand-in until another is activated.');">
-    <input type="hidden" name="model_id" value="{{ active.id }}">
-    <button class="secondary">Retire live model</button>
-  </form>
+  <h2>Live models — one per segment</h2>
+  {% for seg in ['Guarantee','Financing'] %}
+    {% set a = active.get(seg) %}
+    <p style="margin:6px 0">
+      <span class="pill">{{ seg }}</span>
+      {% if a %}
+        <strong>{{ a.name }}</strong> <span class="muted small">{{ a.version }}</span>
+        {% if a.is_synthetic %}<span class="tag-test">synthetic</span>{% endif %}
+        — AUC {{ a.auc if a.auc is not none else '—' }},
+        Recall {{ a.recall if a.recall is not none else '—' }},
+        Precision {{ a.precision if a.precision is not none else '—' }}
+        <form method="post" action="/models/retire" class="inline" style="margin-left:8px"
+              onsubmit="return confirm('Retire the live {{ seg }} model? That segment falls back to the synthetic stand-in.');">
+          <input type="hidden" name="model_id" value="{{ a.id }}">
+          <button class="secondary small">Retire</button></form>
+      {% else %}
+        <span class="muted">no active model — uses the synthetic stand-in</span>
+      {% endif %}
+    </p>
+  {% endfor %}
 </div>
-{% else %}
-<div class="warnbox">No active model — scoring uses the synthetic stand-in. Activate one below.</div>
-{% endif %}
 
 <div class="box">
   <h2>Register a new model</h2>
@@ -36,6 +39,9 @@
     <div class="row">
       <div><label>Name {{ m.info('model_name') }}</label><input name="name" required></div>
       <div><label>Version {{ m.info('model_version') }}</label><input name="version" required placeholder="2026-Q2"></div>
+      <div><label>Segment {{ m.info('model_segment') }}</label>
+        <select name="segment"><option value="Guarantee">Guarantee</option>
+          <option value="Financing">Financing</option></select></div>
       <div><label>Kind {{ m.info('model_kind') }}</label>
         <select name="kind"><option value="real">real (artifact)</option>
           <option value="synthetic">synthetic (stand-in)</option></select></div>
@@ -57,12 +63,13 @@
 </div>
 
 <table>
-  <tr><th>Name</th><th>Version</th><th>Kind</th><th>Status</th>
+  <tr><th>Name</th><th>Version</th><th>Segment</th><th>Kind</th><th>Status</th>
     <th class="right">AUC</th><th class="right">Recall</th><th class="right">Precision</th>
     <th class="right">FN</th><th>Artifact check</th><th>Actions</th></tr>
   {% for r in rows %}
   <tr>
     <td>{{ r.name }}</td><td class="small">{{ r.version }}</td>
+    <td><span class="pill">{{ r.segment }}</span></td>
     <td>{{ r.kind }}{% if r.is_synthetic %} <span class="tag-test">synthetic</span>{% endif %}</td>
     <td>{% if r.status=='active' %}<span class="badge" style="background:#27ae60">active</span>
       {% elif r.status=='draft' %}<span class="pill">draft</span>

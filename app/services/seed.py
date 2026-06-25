@@ -10,6 +10,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.auth.security import hash_password
+from app.core.features import SEGMENTS
 from app.core.model import get_active_model
 from app.db import audit
 from app.db.models import ModelRegistry, ThresholdConfig, User
@@ -37,16 +38,53 @@ def ensure_seed(db: Session) -> None:
                            status="active", note="Baseline from EWS deck (bootstrap).",
                            created_by="system", approved_by="system"))
 
+    # One active synthetic stand-in per segment (Guarantee, Financing). Metrics
+    # are indicative and reflect the deck's real-world picture (high recall,
+    # very low precision, AUC near 0.5) — the real artifacts drop in per segment.
     model = get_active_model()
-    db.add(ModelRegistry(
-        name=model.name, version=model.version, kind=model.kind,
-        is_synthetic=model.is_synthetic, status="active",
-        # Plan's stated calibration posture: recall ~0.73, precision ~0.49.
-        auc=0.86, recall=0.73, precision=0.49, fn_rate=0.077,
-        notes=("Synthetic stand-in for the back-tested XGBoost model. "
-               "Drop in the real artifact via MIA3_MODEL_PATH."),
-        activated_by="system", approved_by="system"))
+    for seg in SEGMENTS:
+        db.add(ModelRegistry(
+            name=f"{seg} — {model.name}", version=f"synthetic-{seg.lower()}-1.0.0",
+            segment=seg, kind=model.kind, is_synthetic=model.is_synthetic, status="active",
+            auc=0.52, recall=0.90, precision=0.12, fn_rate=0.05,
+            notes=(f"Synthetic stand-in for the back-tested {seg} model. "
+                   "Drop in the real artifact via the registry / MIA3_MODEL_PATH. "
+                   "Metrics indicative."),
+            registered_by="system", activated_by="system", approved_by="system"))
     db.flush()
 
     audit.record(db, actor="system", action="system.seed", entity_type="system",
                  detail="Initial bootstrap: users, baseline thresholds, model registry.")
+
+
+def ensure_segment_models(db: Session) -> None:
+    """Idempotently guarantee every segment has an active model.
+
+    Runs on every startup so databases seeded before segments existed (or that
+    have no active model for a segment) get a synthetic stand-in to fall back on.
+    """
+    model = get_active_model()
+    created = False
+    for seg in SEGMENTS:
+        active = db.execute(select(ModelRegistry).where(
+            ModelRegistry.status == "active", ModelRegistry.segment == seg)).scalars().first()
+        if active:
+            continue
+        auto_ver = f"synthetic-{seg.lower()}-auto"
+        existing = db.execute(select(ModelRegistry).where(
+            ModelRegistry.version == auto_ver)).scalars().first()
+        if existing:
+            existing.status = "active"
+            existing.activated_by = "system"
+        else:
+            db.add(ModelRegistry(
+                name=f"{seg} — {model.name}", version=auto_ver, segment=seg,
+                kind=model.kind, is_synthetic=True, status="active",
+                auc=0.52, recall=0.90, precision=0.12, fn_rate=0.05,
+                notes=f"Auto-provisioned synthetic stand-in for {seg}.",
+                registered_by="system", activated_by="system", approved_by="system"))
+        created = True
+    if created:
+        db.flush()
+        audit.record(db, actor="system", action="system.ensure_segment_models",
+                     entity_type="system", detail="Ensured an active model per segment.")

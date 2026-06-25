@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import hashlib
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Dict, List, Optional
 
 from sqlalchemy import func, select
@@ -49,19 +50,25 @@ def execute_run(db: Session, df: pd.DataFrame, *, source: str, actor: str,
     cfg = governance.active_risk_config(db)
     calibrator, calibrated = governance.active_calibrator(db)
     threshold_row = governance.active_threshold(db)
-    # The scoring engine only ever uses the active registry entry's artifact
-    # (coupling rule: never a draft). No artifact path → synthetic stand-in.
-    model_row = governance.active_model_row(db)
-    model = get_active_model(model_path=governance.active_model_path(db))
+    # One active model per segment (coupling rule: only active, never a draft).
+    # Each account is routed to its segment's model; no active model for a
+    # segment → the synthetic stand-in.
+    seg_rows = governance.active_models_by_segment(db)
+
+    def resolver(segment: str):
+        row = seg_rows.get(segment)
+        path = Path(row.artifact_path) if (row and row.artifact_path) else None
+        return get_active_model(model_path=path)
+
+    segment_meta = {seg: (row.name, row.version, row.is_synthetic)
+                    for seg, row in seg_rows.items()}
 
     vr = validate(df)
-    result = score_frame(df, model=model, cfg=cfg, calibrator=calibrator, validation=vr)
-
-    # Record the GOVERNED registry entry on the run (its name/version), falling
-    # back to the loaded model object when no registry entry is active.
-    run_model_name = model_row.name if model_row else result.model_name
-    run_model_version = model_row.version if model_row else result.model_version
-    run_is_synthetic = model_row.is_synthetic if model_row else result.is_synthetic
+    result = score_frame(df, cfg=cfg, calibrator=calibrator, validation=vr,
+                         model_for_segment=resolver, segment_meta=segment_meta)
+    run_model_name = result.model_name
+    run_model_version = result.model_version
+    run_is_synthetic = result.is_synthetic
 
     quality = vr.quality_report()
     # Checkpoint: hold publication if asked, or if nothing could be scored,
@@ -103,8 +110,8 @@ def execute_run(db: Session, df: pd.DataFrame, *, source: str, actor: str,
 
 
 def _score_kwargs(rec: Dict[str, object]) -> Dict[str, object]:
-    keys = ["account_id", "fi_id", "fi_name", "scheme", "sector", "branch",
-            "as_of_date", "probability", "probability_raw", "ead",
+    keys = ["account_id", "fi_id", "fi_name", "segment", "model_version", "scheme",
+            "sector", "branch", "as_of_date", "probability", "probability_raw", "ead",
             "outstanding_ratio", "pd_rank", "ead_rank", "outratio_rank",
             "risk_score", "band", "breakdown", "features", "confidence", "confidence_band",
             "confidence_components", "review_status", "top_factors",
@@ -160,7 +167,7 @@ def breakdown(db: Session, run_id: int, dimension: str,
               *, fi_id: Optional[str] = None) -> List[Dict[str, object]]:
     """Counts by band within a grouping dimension (fi_id|scheme|sector)."""
     col = {"fi_id": AccountScore.fi_id, "scheme": AccountScore.scheme,
-           "sector": AccountScore.sector}[dimension]
+           "sector": AccountScore.sector, "segment": AccountScore.segment}[dimension]
     stmt = select(col, AccountScore.band, func.count()).where(AccountScore.run_id == run_id)
     if fi_id:
         stmt = stmt.where(AccountScore.fi_id == fi_id)

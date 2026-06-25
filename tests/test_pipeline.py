@@ -32,6 +32,35 @@ def test_borderline_confidence_routes_to_review():
     assert borderline["review_status"] == "needs_review"
 
 
+def test_segment_routing_uses_per_segment_model():
+    import numpy as np
+    from app.core.model import SyntheticModel
+
+    class Const(SyntheticModel):
+        def __init__(self, p, version):
+            self.fixed = p
+            self.name = version
+            self.version = version
+            self.is_synthetic = True
+
+        def predict_proba(self, X):
+            return np.full(len(X), self.fixed)
+
+    df = demo_portfolio(n=40, seed=5)
+
+    def resolver(segment):
+        return Const(0.1, "GMODEL") if segment == "Guarantee" else Const(0.9, "FMODEL")
+
+    out = score_frame(df, model_for_segment=resolver)
+    by_segment = {}
+    for r in out.records:
+        by_segment.setdefault(r["segment"], set()).add(r["model_version"])
+
+    # Each account is scored by — and tagged with — its segment's model only.
+    assert by_segment.get("Guarantee") == {"GMODEL"}
+    assert by_segment.get("Financing") == {"FMODEL"}
+
+
 def test_low_exposure_high_prob_is_not_top_band():
     out = score_frame(demo_portfolio(n=20, seed=3))
     case = next(r for r in out.records if r["account_id"] == "HIPROB-LOWEXP")

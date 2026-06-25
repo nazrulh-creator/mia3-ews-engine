@@ -4,8 +4,9 @@
 <p class="small"><a href="/accounts">&larr; All accounts</a></p>
 <h1>Account {{ score.account_id }} {{ m.band_badge(score.band) }}</h1>
 <p class="muted small">FI {{ score.fi_id }} ({{ score.fi_name or '—' }}) ·
+  <span class="pill">{{ score.segment or 'Guarantee' }}</span> ·
   {{ score.scheme }} / {{ score.sector }} · branch {{ score.branch or '—' }} ·
-  run {{ run.run_ref if run }}</p>
+  scored by {{ score.model_version or '—' }} · run {{ run.run_ref if run }}</p>
 
 <div class="row">
   <div class="card" style="flex:1;min-width:340px">
