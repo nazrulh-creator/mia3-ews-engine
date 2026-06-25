@@ -209,8 +209,8 @@ def build_quickstart_docx() -> bytes:
             "Changing one previews the re-banding, then needs a second approver.",
             "Calibration defaults to uncalibrated so nothing changes silently."]),
         ("7 · Safety rails", [
-            "Precision is ~0.49 by design — every high-risk flag goes to a human, never an "
-            "automated action.",
+            "Precision is very low (~0.1) by design — high recall means every high-risk flag "
+            "goes to a human, never an automated action.",
             "Borderline-confidence cases are held for review.",
             "Every step is written to an append-only, hash-chained audit trail."]),
         ("8 · Get help", [

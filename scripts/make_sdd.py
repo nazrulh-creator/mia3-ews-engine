@@ -86,8 +86,9 @@ n(["Governance first — every consequential change is versioned, reasoned, dual
    "prior training."])
 h(2, "2.4 The precision caution (a first-class design driver)")
 p("The model is tuned to catch most genuine cases (recall ~0.73) while keeping false "
-  "negatives low — a sound choice for an early-warning tool. The trade-off is precision "
-  "of ~0.49: roughly half of flagged accounts will be false alarms. This is acceptable "
+  "negatives low — a sound choice for an early-warning tool. The trade-off is very low "
+  "precision (~0.1 in recent monthly results): roughly nine in ten flagged accounts will "
+  "be false alarms. This is acceptable "
   "for a tool that prioritises accounts for a human to look at, and unacceptable for one "
   "that takes automated action. The entire design keeps a person in the loop on every "
   "high-risk call while calibration continues; the confidence-based review flow (§6.4) is "
@@ -438,8 +439,8 @@ t(["Attribute", "Design response"], [
 ])
 
 h(1, "14. Risks, limitations and assumptions")
-b(["Precision ~0.49 — half of flags are false alarms; mitigated structurally by "
-   "human-in-the-loop and the confidence gate.",
+b(["Very low precision (~0.1) — roughly nine in ten flags are false alarms; mitigated "
+   "structurally by human-in-the-loop and the confidence gate.",
    "The hosted TEST app runs a synthetic stand-in model; results are illustrative, not real "
    "monitoring, until the back-tested artifact is dropped in.",
    "Calibration is pending back-testing outcomes; the calibration layer exists but defaults "

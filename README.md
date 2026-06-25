@@ -23,8 +23,9 @@ The app carries SDA team ownership marks, **not** CGC corporate branding.
 4. **Explains** every flag (SHAP) and every band (live arithmetic), and produces a
    printable one-page case report.
 
-> ⚠️ **The one caution.** The model favours recall (~0.73) over precision (~0.49):
-> roughly half the flags are false alarms. That is fine for prioritising accounts
+> ⚠️ **The one caution.** The model favours recall (~0.73 — catches most at-risk
+> accounts) over precision (very low, ~0.1 in recent monthly results): roughly
+> **nine in ten flags are false alarms**. That is fine for prioritising accounts
 > for a human to look at, and unacceptable for automated action. **A person stays
 > in the loop on every high-risk call.**
 

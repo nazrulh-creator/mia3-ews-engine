@@ -36,6 +36,9 @@ SCREENS: Dict[str, str] = {
               "told it to. Read-only here; exportable for an auditor."),
     "models": ("The model registry. Which version is live, its back-tested "
                "metrics, and the governed path to promote a new one."),
+    "performance": ("How the model is performing against the go-live goals "
+                    "(Recall, AUC, false-negative rate) once realised MIA 3 "
+                    "outcomes are recorded — per run and segment."),
     "contract": ("The exact data contract: every column the monthly file must "
                  "contain, its type, and how missing values are handled."),
     "login": "Sign in. Your role decides what you can see and do."
@@ -99,6 +102,15 @@ FIELDS: Dict[str, str] = {
     "learning_linked": "Optional account id this learning relates to.",
     "learning_title": "A short, searchable headline for this learning.",
     "learning_body": "The detail — what was learned and why it matters.",
+    # Realised-outcome capture
+    "outcome_actual": "Did this account actually reach Months-in-Arrears 3? This is "
+                      "the label the model's performance is judged against.",
+    "outcome_intervention": "Tick if a collection/support action was taken. Outcomes "
+                            "with an intervention are influenced by that action, not "
+                            "just the borrower — they bias the labels (recorded so "
+                            "re-calibration can correct for it).",
+    "outcome_exit": "If the account left the book before the horizon (settled, "
+                    "restructured, written off, closed) — used to handle censoring.",
     # Universal problem reporting
     "problem_detail": "Describe what went wrong. We auto-capture the screen, your "
                       "user and the time, and link it to the audit trail.",
@@ -129,7 +141,8 @@ DATA_ENTRY_FIELDS: Dict[str, list] = {
     "tuning": ["w_pd", "w_ead", "w_outratio", "t_very_high", "t_high",
                "t_moderate", "threshold_note", "cal_method", "cal_a", "cal_b",
                "cal_note"],
-    "account_detail": ["review_decision", "review_outcome", "review_reason"],
+    "account_detail": ["review_decision", "review_outcome", "review_reason",
+                       "outcome_actual", "outcome_intervention", "outcome_exit"],
     "learnings": ["learning_category", "learning_linked", "learning_title",
                   "learning_body"],
     "models": ["model_name", "model_version", "model_segment", "model_kind",

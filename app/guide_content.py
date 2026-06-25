@@ -267,9 +267,10 @@ It is a weighted blend of five components:</p>
 <tr><td>Calibration (is the active model calibrated?)</td><td>10%</td></tr></table>
 <p>Confidence drives where scarce human attention goes:</p>
 {ROUTING_SVG}
-{_warn("This is the direct answer to the precision caution: roughly half of flags are "
-       "false alarms. The confidence gate is what stops false alarms from becoming wasted "
-       "effort or unfair treatment of a customer while precision is low.")}"""},
+{_warn("This is the direct answer to the precision caution: in recent monthly results "
+       "precision is very low (around 0.1), so roughly nine in ten flags are false "
+       "alarms. The confidence gate and mandatory human review are what stop those false "
+       "alarms from becoming wasted effort or unfair treatment of a customer.")}"""},
 
     {"id": "review", "num": "9", "title": "The human review queue", "body": f"""
 <p>Borderline-confidence and elevated-risk accounts wait in the review queue for a
@@ -346,6 +347,23 @@ The scoring engine only ever uses the <b>active</b> entry — never a draft.</p>
        "the MIA3_MODEL_PATH setting. Either way, the loader refuses an artifact whose "
        "features do not match the data contract, so a mismatched model can never score.")}"""},
 
+    {"id": "performance", "num": "13b", "title": "Model performance monitoring", "body": f"""
+<p>Once realised MIA 3 outcomes are recorded, the <b>Performance</b> screen tracks how the
+model actually did, per run and segment, against the go-live goals from the deck:
+<b>Recall &gt; 75%</b>, <b>AUC &gt; 65%</b>, <b>false-negative rate &lt; 20%</b>.</p>
+{_seen(
+ "A row per run and segment with Recall, Precision, FN rate and AUC, each coloured against its goal.",
+ "An overall <b>all met / below goal</b> badge per row.",
+ "An <b>Intervened</b> share — the selective-labels caveat (outcomes influenced by an action taken).")}
+{_steps(
+ "Record realised outcomes on accounts (the ‘Record realised outcome’ form on an account), as accounts mature.",
+ "In TEST, use <b>Simulate outcomes for latest run</b> to populate the view with a realistic synthetic set.",
+ "Read the metrics against the goals; a high intervention rate means treat the numbers as optimistic.")}
+{_warn("Outcomes where an intervention was applied are biased — the action, not just the "
+       "borrower, shaped the result. This is recorded so future re-calibration can correct "
+       "for it (the selective-labels problem). Reject inference does not apply to MIA3 — it "
+       "scores the existing book, not applicants it never observes.")}"""},
+
     {"id": "ladder", "num": "14", "title": "Portfolio early-warning ladder", "body": f"""
 <p>Beyond per-account flags, MIA3 watches concentrations. When the share of an FI's or
 a sector's book in the high-risk bands crosses a governed level, it raises a
@@ -412,7 +430,7 @@ SCREEN_TO_SECTION: Dict[str, str] = {
     "dashboard": "dashboard", "accounts": "accounts", "account_detail": "account",
     "worklist": "review", "review": "review", "runs": "runs", "tuning": "tuning",
     "demo": "demo", "learnings": "learnings", "audit": "audit", "models": "models",
-    "contract": "contract", "login": "live-test",
+    "contract": "contract", "login": "live-test", "performance": "performance",
 }
 
 

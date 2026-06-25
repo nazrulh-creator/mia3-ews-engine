@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Model performance</h1>
+<p class="muted small">Once realised MIA 3 outcomes are recorded, the engine tracks
+  Recall, Precision, the false-negative rate and AUC per run and segment, against the
+  go-live goals: <b>Recall &gt; {{ (goals.recall*100)|round(0)|int }}%</b>,
+  <b>AUC &gt; {{ (goals.auc*100)|round(0)|int }}%</b>,
+  <b>FN &lt; {{ (goals.fn*100)|round(0)|int }}%</b>.</p>
+
+{% if not settings.is_live %}
+<div class="warnbox">
+  <strong>TEST environment.</strong> Record outcomes on individual accounts, or
+  synthesise a realistic set for the latest run to populate this view.
+  <form method="post" action="/performance/simulate" class="inline" style="margin-left:8px">
+    <button class="secondary small">Simulate outcomes for latest run</button>
+  </form>
+</div>
+{% endif %}
+
+{% if not rows %}
+<p class="muted">No outcomes recorded yet. Record realised outcomes on accounts
+  (or simulate a set in TEST) to see performance against the goals.</p>
+{% else %}
+<table>
+  <tr><th>Run</th><th>Segment</th><th class="right">Scored</th><th class="right">Events</th>
+    <th class="right">Recall</th><th class="right">Precision</th>
+    <th class="right">FN rate</th><th class="right">AUC</th>
+    <th class="right">Intervened</th><th>Goals</th></tr>
+  {% for r in rows %}
+  <tr>
+    <td class="small">{{ r.run_ref }}</td>
+    <td><span class="pill">{{ r.segment }}</span></td>
+    <td class="right">{{ r.n }}</td>
+    <td class="right">{{ r.events }}</td>
+    <td class="right" style="color:{{ '#1d7a46' if r.recall_ok else '#c0392b' }}">
+      {{ (r.recall*100)|round(1) ~ '%' if r.recall is not none else '—' }}</td>
+    <td class="right">{{ (r.precision*100)|round(1) ~ '%' if r.precision is not none else '—' }}</td>
+    <td class="right" style="color:{{ '#1d7a46' if r.fn_ok else '#c0392b' }}">
+      {{ (r.fn_rate*100)|round(1) ~ '%' if r.fn_rate is not none else '—' }}</td>
+    <td class="right" style="color:{{ '#1d7a46' if r.auc_ok else '#c0392b' }}">
+      {{ r.auc|round(3) if r.auc is not none else '—' }}</td>
+    <td class="right">{{ (r.intervention_rate*100)|round(0)|int }}%</td>
+    <td>
+      {% if r.recall_ok and r.auc_ok and r.fn_ok %}<span class="badge" style="background:#27ae60">all met</span>
+      {% else %}<span class="badge" style="background:#e67e22">below goal</span>{% endif %}
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+<div class="g-warn" style="margin-top:14px">
+  <strong>Selective-labels caveat.</strong> The “Intervened” column is the share of
+  flagged accounts where an intervention was applied — those outcomes are influenced by
+  the action taken, not just the borrower. Treat metrics with a high intervention rate as
+  optimistic, and weight them accordingly in re-calibration.
+</div>
+{% endif %}
+{% endblock %}

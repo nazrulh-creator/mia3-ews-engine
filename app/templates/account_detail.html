@@ -99,4 +99,27 @@
 {% elif score.review_status == 'reviewed' %}
 <div class="ok">A review decision has been recorded for this account.</div>
 {% endif %}
+
+{% if user.role in ['internal','branch'] %}
+<div class="card">
+  <h2>Record realised outcome {{ m.info('outcome_actual') }}</h2>
+  <p class="small muted">For re-calibration and the performance view: did this account
+    actually reach MIA 3, and was an intervention applied?</p>
+  <form method="post" action="/accounts/{{ score.id }}/outcome">
+    <div class="row">
+      <div><label>Reached MIA 3? {{ m.info('outcome_actual') }}</label>
+        <select name="actual_mia3"><option value="no">No</option><option value="yes">Yes</option></select></div>
+      <div><label>Exit reason (optional) {{ m.info('outcome_exit') }}</label>
+        <select name="exit_reason"><option value="">—</option>
+          <option value="settled">Settled early</option>
+          <option value="restructured">Restructured</option>
+          <option value="written_off">Written off</option>
+          <option value="closed">Closed</option></select></div>
+    </div>
+    <label class="small"><input type="checkbox" name="intervention_applied" value="1" style="width:auto">
+      Intervention was applied {{ m.info('outcome_intervention') }}</label>
+    <p><button type="submit">Record outcome</button></p>
+  </form>
+</div>
+{% endif %}
 {% endblock %}

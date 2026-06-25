@@ -63,8 +63,8 @@
   </div>
   <div class="qs-card">
     <h3>Human-on-the-loop</h3>
-    <p class="small">Precision is ~0.49 by design (high recall) — so a flag is a prompt for a
-      person to look, never an automated action against a customer.</p>
+    <p class="small">Precision is very low (~0.1) by design (high recall) — so a flag is a prompt
+      for a person to look, never an automated action against a customer.</p>
     <a class="small" href="/guide#review" target="_blank" rel="noopener">Learn more →</a>
   </div>
   <div class="qs-card">
@@ -80,10 +80,11 @@
   <details><summary>Is a flag a decision?</summary>
     <p class="small">No. A flag prioritises an account for a human to review. The engine never
       takes automated action against a customer while precision is being calibrated.</p></details>
-  <details><summary>Why do about half the flags turn out to be false alarms?</summary>
+  <details><summary>Why do most flags turn out to be false alarms?</summary>
     <p class="small">The model is deliberately tuned for high recall — to catch most at-risk
-      accounts early. Precision (~0.49) is the trade-off. The confidence gate and the human
-      review queue are how that trade-off is managed in practice.</p></details>
+      accounts early. Precision is very low (~0.1 in recent monthly results), so roughly nine
+      in ten flags are false alarms. The confidence gate and the human review queue are how
+      that trade-off is managed in practice.</p></details>
   <details><summary>What's the difference between MIA3 and MicroFlex?</summary>
     <p class="small">MicroFlex is a gatekeeper — it decides whether to let a new loan through.
       MIA3 is a smoke detector — it monitors the loans already on the book.</p></details>

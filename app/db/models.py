@@ -207,6 +207,30 @@ class PortfolioAlert(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
 
 
+class Outcome(Base):
+    """Realised outcome for a scored account — the label the model is judged on.
+
+    Captures whether the account actually reached MIA 3, plus whether an
+    intervention was applied and any exit reason (the inputs needed to correct
+    for selective-labels / censoring bias in future re-calibration).
+    """
+    __tablename__ = "outcomes"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    score_id: Mapped[Optional[int]] = mapped_column(ForeignKey("account_scores.id"), nullable=True)
+    run_ref: Mapped[str] = mapped_column(String(64), index=True)
+    account_id: Mapped[str] = mapped_column(String(64), index=True)
+    segment: Mapped[str] = mapped_column(String(16), index=True)
+    probability: Mapped[float] = mapped_column(Float)          # snapshot at capture
+    predicted_positive: Mapped[bool] = mapped_column(Boolean)  # probability >= operating point
+    band: Mapped[str] = mapped_column(String(20))
+    actual_mia3: Mapped[bool] = mapped_column(Boolean)
+    intervention_applied: Mapped[bool] = mapped_column(Boolean, default=False)
+    exit_reason: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)
+    source: Mapped[str] = mapped_column(String(16), default="manual")  # manual|simulated
+    recorded_by: Mapped[str] = mapped_column(String(64))
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
+
+
 class ProblemReport(Base):
     __tablename__ = "problem_reports"
     id: Mapped[int] = mapped_column(primary_key=True)
