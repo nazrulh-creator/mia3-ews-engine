@@ -8,19 +8,21 @@
   before editing, so a live model never changes underneath users.</div>
 {% else %}
 <div class="box">
-  <form method="post" action="/models/{{ row.id }}/edit" enctype="multipart/form-data">
+  <form method="post" action="/models/{{ row.id }}/edit">
     <div class="row">
       <div><label>Name {{ m.info('model_name') }}</label><input name="name" value="{{ row.name }}" required></div>
       <div><label>Version</label><input value="{{ row.version }}" disabled>
         <span class="small muted">version is fixed</span></div>
-      <div><label>Kind {{ m.info('model_kind') }}</label>
-        <select name="kind">
-          <option value="real" {{ 'selected' if not row.is_synthetic }}>real (artifact)</option>
-          <option value="synthetic" {{ 'selected' if row.is_synthetic }}>synthetic (stand-in)</option>
+      <div><label>Model type {{ m.info('model_type') }}</label>
+        <select name="model_type">
+          {% for t in ['synthetic','logistic','ols','xgboost'] %}
+          <option value="{{ t }}" {{ 'selected' if row.model_type==t }}>{{ t }}</option>{% endfor %}
         </select></div>
     </div>
-    <label>Artifact path {{ m.info('model_artifact') }}</label>
+    <label>Artifact path <span class="muted small">— ML artifact only</span> {{ m.info('model_artifact') }}</label>
     <input name="artifact_path" value="{{ row.artifact_path or '' }}" placeholder="/app/data/models/…">
+    <label>Coefficient spec <span class="muted small">— logistic / OLS only (JSON)</span> {{ m.info('model_spec') }}</label>
+    <textarea name="spec" rows="10" style="max-width:620px;font-family:monospace;font-size:12.5px">{{ spec_text }}</textarea>
     <div class="row">
       <div><label>AUC {{ m.info('model_auc') }}</label><input name="auc" type="number" step="0.01" value="{{ row.auc if row.auc is not none else '' }}"></div>
       <div><label>Recall {{ m.info('model_recall') }}</label><input name="recall" type="number" step="0.01" value="{{ row.recall if row.recall is not none else '' }}"></div>

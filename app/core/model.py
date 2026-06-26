@@ -155,6 +155,64 @@ class RealModel(ModelWrapper):
         return np.asarray(obj.predict(X)).astype(float)
 
 
+class CoefficientModel(ModelWrapper):
+    """Glass-box linear model entered and edited in-app.
+
+    spec = {"intercept": float, "coefficients": {feature: weight, ...},
+            "standardize": bool}. With link "logit" it is a logistic regression
+            (probability = sigmoid(linear)); with link "identity" it is an OLS /
+            linear regression whose output is clipped to [0,1] as a score.
+    Contributions are exact (weight × value), so explanations are first-class.
+    """
+    is_synthetic = False
+
+    def __init__(self, spec: Dict, *, name: str, version: str, link: str = "logit"):
+        self.spec = spec or {}
+        self.name = name
+        self.version = version
+        self.link = link
+        self.kind = "logistic" if link == "logit" else "ols"
+        self.intercept = float(self.spec.get("intercept", 0.0))
+        self.coef = {k: float(v) for k, v in (self.spec.get("coefficients", {}) or {}).items()}
+        self.standardize = bool(self.spec.get("standardize", False))
+
+    def _x(self, X: pd.DataFrame, feature: str) -> np.ndarray:
+        x = X[feature].astype(float).to_numpy()
+        if self.standardize and feature in _REF:
+            mean, scale = _REF[feature]
+            x = (x - mean) / (scale or 1.0)
+        return x
+
+    def _linear(self, X: pd.DataFrame) -> np.ndarray:
+        lin = np.full(len(X), self.intercept, dtype=float)
+        for f, w in self.coef.items():
+            if f in X.columns:
+                lin = lin + w * self._x(X, f)
+        return lin
+
+    def predict_proba(self, X: pd.DataFrame) -> np.ndarray:
+        X = self._align(X)
+        lin = self._linear(X)
+        if self.link == "logit":
+            return _sigmoid(lin)
+        return np.clip(lin, 0.0, 1.0)
+
+    def contributions(self, X: pd.DataFrame) -> np.ndarray:
+        X = self._align(X)
+        contrib = np.zeros((len(X), len(self.feature_names)), dtype=float)
+        for j, f in enumerate(self.feature_names):
+            w = self.coef.get(f, 0.0)
+            if w:
+                contrib[:, j] = w * self._x(X, f)
+        return contrib
+
+
+def coefficient_template() -> Dict:
+    """A starter spec listing every model feature at weight 0 (for the UI)."""
+    return {"intercept": 0.0, "standardize": True,
+            "coefficients": {f: 0.0 for f in MODEL_FEATURE_NAMES}}
+
+
 def _load_real(path: Path) -> Optional[RealModel]:
     if not path or not path.exists():
         return None
@@ -237,3 +295,50 @@ def validate_artifact(path: Optional[Path]) -> tuple:
         return False, (f"Feature mismatch — missing={sorted(contract - artifact)}, "
                        f"unexpected={sorted(artifact - contract)}.")
     return True, f"Loaded OK ({len(real.feature_names)} features match the contract)."
+
+
+def validate_spec(spec: Optional[Dict]) -> tuple:
+    """Validate a glass-box coefficient spec against the data contract."""
+    if not isinstance(spec, dict):
+        return False, "Spec must be a JSON object."
+    coefs = spec.get("coefficients")
+    if not isinstance(coefs, dict) or not coefs:
+        return False, "Spec needs a non-empty 'coefficients' object."
+    unknown = sorted(set(coefs) - set(MODEL_FEATURE_NAMES))
+    if unknown:
+        return False, f"Unknown feature(s) in coefficients: {unknown}."
+    try:
+        float(spec.get("intercept", 0.0))
+        for v in coefs.values():
+            float(v)
+    except (TypeError, ValueError):
+        return False, "Intercept and all coefficients must be numbers."
+    return True, f"Spec OK ({len(coefs)} coefficient(s))."
+
+
+def validate_model(model_type: str, *, artifact_path=None, spec=None) -> tuple:
+    """Type-aware pre-flight before a model is activated."""
+    if model_type in ("logistic", "ols"):
+        return validate_spec(spec)
+    if model_type == "synthetic":
+        return True, "Synthetic stand-in."
+    # xgboost / uploaded artifact
+    return validate_artifact(Path(artifact_path) if artifact_path else None)
+
+
+def build_model(model_type: str, *, name: str, version: str,
+                artifact_path=None, spec=None) -> ModelWrapper:
+    """Construct a ModelWrapper from a registry entry's type/spec/artifact."""
+    if model_type == "logistic":
+        return CoefficientModel(spec or {}, name=name, version=version, link="logit")
+    if model_type == "ols":
+        return CoefficientModel(spec or {}, name=name, version=version, link="identity")
+    if model_type == "synthetic" or (not artifact_path and model_type != "xgboost"):
+        m = SyntheticModel()
+        m.name, m.version = name, version
+        return m
+    real = _load_real(Path(artifact_path))
+    if real is None:
+        raise RuntimeError(f"Could not load artifact for {name} {version}.")
+    real.name, real.version = name, version
+    return real

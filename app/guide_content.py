@@ -203,6 +203,7 @@ order, shown below. (Flowchart symbols used throughout this guide:)</p>
 <p>The dashboard turns thousands of scored accounts into something you can read at a
 glance. It always reflects the latest <i>published</i> run.</p>
 {_seen(
+ "A <b>What's shaping the risk picture</b> panel — the active model(s) and Decision Rule per segment, so you always know what produced the numbers.",
  "Four <b>band cards</b> — counts of Very High, High, Moderate and Low risk. Click a card to see those accounts.",
  "<b>By FI, by scheme and by sector</b> tables, each sortable, with the high-risk share highlighted.",
  "A <b>trend</b> table — how each band's population moves run to run, so deterioration shows as a shape.",
@@ -330,9 +331,14 @@ calibration on the <b>Tuning</b> screen. Nothing changes on one person's say-so.
 
     {"id": "models", "num": "13", "title": "The model registry", "body": f"""
 <p>The <b>Models</b> screen is where internal-risk users register, edit, swap and
-retire model versions. There is <b>one active model per segment</b> — Guarantee and
-Financing each have their own — and every account is routed to its segment's model.
-The scoring engine only ever uses the <b>active</b> entry — never a draft.</p>
+retire decision models. Several model <b>types</b> are supported, and <b>more than one
+model can be active per segment</b>; how they combine into the trigger is set by a
+<b>Decision Rule</b> (§13c). The scoring engine only ever uses <b>active</b> models — never a draft.</p>
+<table><tr><th>Model type</th><th>What it is</th></tr>
+<tr><td>Synthetic</td><td>The built-in deterministic stand-in.</td></tr>
+<tr><td>Logistic regression</td><td>A glass-box model you define in-app by a coefficient spec; probability = sigmoid(intercept + Σ weight·feature).</td></tr>
+<tr><td>OLS / linear regression</td><td>A glass-box linear model defined the same way; output clipped to 0–1.</td></tr>
+<tr><td>ML artifact (XGBoost / sklearn)</td><td>An uploaded trained artifact, validated against the data contract.</td></tr></table>
 {DUAL_CONTROL_SVG}
 {_seen(
  "The <b>live model</b> card — the active version, its metrics, and a <b>Retire</b> button.",
@@ -346,6 +352,26 @@ The scoring engine only ever uses the <b>active</b> entry — never a draft.</p>
 {_note("The real back-tested XGBoost artifact can also be supplied at deploy time via "
        "the MIA3_MODEL_PATH setting. Either way, the loader refuses an artifact whose "
        "features do not match the data contract, so a mismatched model can never score.")}"""},
+
+    {"id": "rules", "num": "13a", "title": "Decision rules (ensembles)", "body": f"""
+<p>When more than one model is active for a segment, the early-warning trigger is an
+<b>ensemble</b> — the combination defined by the segment's active <b>Decision Rule</b>.
+Rules are governed exactly like models: a maker proposes, a different checker approves.</p>
+{DUAL_CONTROL_SVG}
+<table><tr><th>Method</th><th>How models combine</th></tr>
+<tr><td>single</td><td>Use one model only (the default when just one is active).</td></tr>
+<tr><td>average</td><td>Mean of the models' probabilities.</td></tr>
+<tr><td>weighted</td><td>Weighted mean (weights by model version).</td></tr>
+<tr><td>max</td><td>Most conservative — flags if any model is high.</td></tr>
+<tr><td>min / median</td><td>Least conservative / robust middle.</td></tr>
+<tr><td>majority</td><td>Share of models whose probability ≥ the rule threshold.</td></tr></table>
+{_steps(
+ "Activate the models you want in the ensemble on the Models screen (§13).",
+ "On <b>Decision rules</b>, choose the segment and method (and weights or threshold), and submit.",
+ "A different approver activates it; the next scoring run uses the new combination.",
+ "Deactivate any time — the segment reverts to the default (single model, or an average of several).")}
+{_note("Each segment has exactly one active rule. The dashboard always shows which "
+       "models and which rule are shaping the picture (§4).")}"""},
 
     {"id": "performance", "num": "13b", "title": "Model performance monitoring", "body": f"""
 <p>Once realised MIA 3 outcomes are recorded, the <b>Performance</b> screen tracks how the
@@ -431,6 +457,7 @@ SCREEN_TO_SECTION: Dict[str, str] = {
     "worklist": "review", "review": "review", "runs": "runs", "tuning": "tuning",
     "demo": "demo", "learnings": "learnings", "audit": "audit", "models": "models",
     "contract": "contract", "login": "live-test", "performance": "performance",
+    "rules": "rules",
 }
 
 

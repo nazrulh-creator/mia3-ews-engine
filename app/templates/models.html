@@ -4,26 +4,30 @@
 <h1>Model registry</h1>
 {% if error %}<div class="alert">{{ error }}</div>{% endif %}
 {% if ok %}<div class="ok">{{ ok }}</div>{% endif %}
-<p class="small muted">Which model version is live, its back-tested metrics, and the
-  governed path to register, edit, swap or retire one. The scoring engine only ever
-  uses the <b>active</b> entry's artifact — never a draft.</p>
+<p class="small muted">Register, edit, activate and retire the decision models. Several
+  models may be <b>active per segment</b>; how they combine into the trigger is set by a
+  <a href="/rules">Decision Rule</a>. The scoring engine only ever uses <b>active</b>
+  models — never a draft.</p>
 
 <div class="card">
-  <h2>Live models — one per segment</h2>
+  <h2>Live models &amp; rules — per segment</h2>
   {% for seg in ['Guarantee','Financing'] %}
-    {% set a = active.get(seg) %}
+    {% set rows_s = active.get(seg, []) %}
+    {% set rule = rules.get(seg) %}
     <p style="margin:6px 0">
       <span class="pill">{{ seg }}</span>
-      {% if a %}
-        <strong>{{ a.name }}</strong> <span class="muted small">{{ a.version }}</span>
-        {% if a.is_synthetic %}<span class="tag-test">synthetic</span>{% endif %}
-        — AUC {{ a.auc if a.auc is not none else '—' }},
-        Recall {{ a.recall if a.recall is not none else '—' }},
-        Precision {{ a.precision if a.precision is not none else '—' }}
-        <form method="post" action="/models/retire" class="inline" style="margin-left:8px"
-              onsubmit="return confirm('Retire the live {{ seg }} model? That segment falls back to the synthetic stand-in.');">
-          <input type="hidden" name="model_id" value="{{ a.id }}">
-          <button class="secondary small">Retire</button></form>
+      {% if rows_s %}
+        {% for a in rows_s %}
+          <strong>{{ a.name }}</strong> <span class="muted small">{{ a.version }} · {{ a.model_type }}</span>
+          <form method="post" action="/models/retire" class="inline" style="margin:0 10px 0 2px"
+                onsubmit="return confirm('Retire {{ a.version }} from the {{ seg }} active set?');">
+            <input type="hidden" name="model_id" value="{{ a.id }}">
+            <button class="secondary small">Retire</button></form>
+        {% endfor %}
+        <br><span class="small muted">Decision rule:
+          {% if rule %}<strong>{{ rule.method }}</strong> (v{{ rule.version }})
+          {% elif rows_s|length > 1 %}<strong>average</strong> (default — set a rule on <a href="/rules">Decision rules</a>)
+          {% else %}<strong>single</strong> (one active model){% endif %}</span>
       {% else %}
         <span class="muted">no active model — uses the synthetic stand-in</span>
       {% endif %}
@@ -33,24 +37,28 @@
 
 <div class="box">
   <h2>Register a new model</h2>
-  <p class="small muted">This creates a <b>draft</b>. A different person must activate it
-    (dual control), and the artifact is validated against the data contract first.</p>
+  <p class="small muted">Creates a <b>draft</b>. A different person must activate it
+    (dual control); the spec/artifact is validated against the data contract first.</p>
   <form method="post" action="/models/register" enctype="multipart/form-data">
     <div class="row">
       <div><label>Name {{ m.info('model_name') }}</label><input name="name" required></div>
       <div><label>Version {{ m.info('model_version') }}</label><input name="version" required placeholder="2026-Q2"></div>
       <div><label>Segment {{ m.info('model_segment') }}</label>
-        <select name="segment"><option value="Guarantee">Guarantee</option>
-          <option value="Financing">Financing</option></select></div>
-      <div><label>Kind {{ m.info('model_kind') }}</label>
-        <select name="kind"><option value="real">real (artifact)</option>
-          <option value="synthetic">synthetic (stand-in)</option></select></div>
+        <select name="segment"><option>Guarantee</option><option>Financing</option></select></div>
+      <div><label>Model type {{ m.info('model_type') }}</label>
+        <select name="model_type">
+          <option value="synthetic">Synthetic stand-in</option>
+          <option value="logistic">Logistic regression (glass-box)</option>
+          <option value="ols">OLS / linear regression (glass-box)</option>
+          <option value="xgboost">ML artifact (XGBoost / sklearn)</option>
+        </select></div>
     </div>
-    <div class="row">
-      <div><label>Artifact file {{ m.info('model_artifact') }}</label>
-        <input type="file" name="file" accept=".json,.ubj,.bst,.pkl"></div>
-      <div><label>…or server path</label><input name="artifact_path" placeholder="/app/data/models/…"></div>
-    </div>
+    <label>Artifact file <span class="muted small">— ML artifact only</span> {{ m.info('model_artifact') }}</label>
+    <input type="file" name="file" accept=".json,.ubj,.bst,.pkl">
+    <input name="artifact_path" placeholder="…or a server path" style="margin-top:6px">
+    <label>Coefficient spec <span class="muted small">— logistic / OLS only (JSON)</span> {{ m.info('model_spec') }}</label>
+    <textarea name="spec" rows="8" style="max-width:620px;font-family:monospace;font-size:12.5px"
+              placeholder="{{ spec_template }}">{{ spec_template }}</textarea>
     <div class="row">
       <div><label>AUC {{ m.info('model_auc') }}</label><input name="auc" type="number" step="0.01"></div>
       <div><label>Recall {{ m.info('model_recall') }}</label><input name="recall" type="number" step="0.01"></div>
@@ -63,27 +71,22 @@
 </div>
 
 <table>
-  <tr><th>Name</th><th>Version</th><th>Segment</th><th>Kind</th><th>Status</th>
+  <tr><th>Name</th><th>Version</th><th>Segment</th><th>Type</th><th>Status</th>
     <th class="right">AUC</th><th class="right">Recall</th><th class="right">Precision</th>
-    <th class="right">FN</th><th>Artifact check</th><th>Actions</th></tr>
+    <th>Validity</th><th>Actions</th></tr>
   {% for r in rows %}
   <tr>
     <td>{{ r.name }}</td><td class="small">{{ r.version }}</td>
     <td><span class="pill">{{ r.segment }}</span></td>
-    <td>{{ r.kind }}{% if r.is_synthetic %} <span class="tag-test">synthetic</span>{% endif %}</td>
+    <td>{{ r.model_type }}</td>
     <td>{% if r.status=='active' %}<span class="badge" style="background:#27ae60">active</span>
       {% elif r.status=='draft' %}<span class="pill">draft</span>
       {% else %}<span class="pill">retired</span>{% endif %}</td>
     <td class="right">{{ r.auc if r.auc is not none else '—' }}</td>
     <td class="right">{{ r.recall if r.recall is not none else '—' }}</td>
     <td class="right">{{ r.precision if r.precision is not none else '—' }}</td>
-    <td class="right">{{ (r.fn_rate*100)|round(1) ~ '%' if r.fn_rate is not none else '—' }}</td>
-    <td class="small">
-      {% if r.id in validations %}
-        {% if validations[r.id].ok %}<span style="color:#1d7a46">✓ valid</span>
-        {% else %}<span style="color:#c0392b" title="{{ validations[r.id].msg }}">✗ invalid</span>{% endif %}
-      {% else %}<span class="muted">synthetic</span>{% endif %}
-    </td>
+    <td class="small">{% if validations[r.id].ok %}<span style="color:#1d7a46">✓</span>
+      {% else %}<span style="color:#c0392b" title="{{ validations[r.id].msg }}">✗</span>{% endif %}</td>
     <td>
       {% if r.status != 'active' %}
         <form method="post" action="/models/activate" class="inline">
@@ -95,7 +98,7 @@
   </tr>
   {% endfor %}
 </table>
-<p class="small muted">Dual control: the person who registers a model cannot activate it —
-  a second internal-risk approver must. Retiring the live model is immediate (the safe
-  direction). The real XGBoost artifact also drops in via <code>MIA3_MODEL_PATH</code>.</p>
+<p class="small muted">Glass-box logistic/OLS models are defined by a coefficient spec you
+  enter and edit here. Uploaded ML artifacts also drop in via <code>MIA3_MODEL_PATH</code>.
+  Dual control: the registrant cannot activate their own model.</p>
 {% endblock %}

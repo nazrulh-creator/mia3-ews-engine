@@ -53,10 +53,13 @@ def dashboard(request: Request, user: User = Depends(require_user),
         if scope:
             alerts = [a for a in alerts if not (a.dimension == "fi" and a.key != scope)]
     trend = runs.trend(db, fi_id=scope)
+    active_models = governance.active_models_by_segment(db)   # {segment: [rows]}
+    active_rules = governance.active_rules_by_segment(db)     # {segment: rule}
     return templates.TemplateResponse("dashboard.html", _ctx(
         request, user, "dashboard", run=run, counts=counts, by_fi=by_fi,
         by_scheme=by_scheme, by_sector=by_sector, by_segment=by_segment,
-        alerts=alerts, trend=trend))
+        alerts=alerts, trend=trend, active_models=active_models,
+        active_rules=active_rules))
 
 
 # --- Accounts list + worklist ---------------------------------------------

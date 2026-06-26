@@ -50,22 +50,17 @@ def execute_run(db: Session, df: pd.DataFrame, *, source: str, actor: str,
     cfg = governance.active_risk_config(db)
     calibrator, calibrated = governance.active_calibrator(db)
     threshold_row = governance.active_threshold(db)
-    # One active model per segment (coupling rule: only active, never a draft).
-    # Each account is routed to its segment's model; no active model for a
-    # segment → the synthetic stand-in.
-    seg_rows = governance.active_models_by_segment(db)
-
+    # Each account is routed to its segment's scorer — a single active model or
+    # an Ensemble of the active models combined by the active Decision Rule
+    # (coupling rule: only active models, never a draft). No active model →
+    # the synthetic stand-in.
     def resolver(segment: str):
-        row = seg_rows.get(segment)
-        path = Path(row.artifact_path) if (row and row.artifact_path) else None
-        return get_active_model(model_path=path)
-
-    segment_meta = {seg: (row.name, row.version, row.is_synthetic)
-                    for seg, row in seg_rows.items()}
+        scorer = governance.segment_scorer(db, segment)
+        return scorer if scorer is not None else get_active_model()
 
     vr = validate(df)
     result = score_frame(df, cfg=cfg, calibrator=calibrator, validation=vr,
-                         model_for_segment=resolver, segment_meta=segment_meta)
+                         model_for_segment=resolver)
     run_model_name = result.model_name
     run_model_version = result.model_version
     run_is_synthetic = result.is_synthetic

@@ -204,10 +204,13 @@ def build_quickstart_docx() -> bytes:
             "Data arrives → validated against the contract → model scores P(MIA3) → risk "
             "score 0.5/0.3/0.2 → four bands → confidence routing → three role-based views.",
             "Bands: Low <2.0 · Moderate 2–3 · High 3–3.5 · Very High >3.5."]),
-        ("6 · Governed settings (dual control)", [
-            "The 50/30/20 weights and band cut-offs are governed parameters, not hardcoded.",
-            "Changing one previews the re-banding, then needs a second approver.",
-            "Calibration defaults to uncalibrated so nothing changes silently."]),
+        ("6 · Models, ensembles & governed settings", [
+            "Models: register synthetic, glass-box logistic/OLS (enter coefficients) or "
+            "uploaded ML models — one or more active per segment.",
+            "Decision rules: when several models are active, a governed rule (average, "
+            "weighted, max, majority…) combines them into the trigger.",
+            "Weights, band cut-offs, calibration, models and rules are all dual-controlled; "
+            "the dashboard shows which models and rules are live."]),
         ("7 · Safety rails", [
             "Precision is very low (~0.1) by design — high recall means every high-risk flag "
             "goes to a human, never an automated action.",

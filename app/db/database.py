@@ -29,7 +29,9 @@ class Base(DeclarativeBase):
 # additive — create_all never adds columns to an existing table, so we ALTER.
 _ADDITIVE_COLUMNS = {
     "model_registry": [("registered_by", "VARCHAR(64)"),
-                       ("segment", "VARCHAR(16) DEFAULT 'Guarantee'")],
+                       ("segment", "VARCHAR(16) DEFAULT 'Guarantee'"),
+                       ("model_type", "VARCHAR(24) DEFAULT 'synthetic'"),
+                       ("spec", "JSON")],
     "account_scores": [("segment", "VARCHAR(16) DEFAULT 'Guarantee'"),
                        ("model_version", "VARCHAR(64)")],
 }

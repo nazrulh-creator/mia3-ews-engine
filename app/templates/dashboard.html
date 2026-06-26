@@ -2,6 +2,29 @@
 {% import "_macros.html" as m %}
 {% block content %}
 <h1>Portfolio overview</h1>
+
+<div class="card" style="margin-bottom:16px;border-left:4px solid var(--sda-2)">
+  <h2 style="margin-top:0">What's shaping the risk picture</h2>
+  <div class="row">
+  {% for seg in ['Guarantee','Financing'] %}
+    {% set ms = active_models.get(seg, []) %}
+    {% set rule = active_rules.get(seg) %}
+    <div style="flex:1;min-width:260px">
+      <span class="pill">{{ seg }}</span>
+      {% if ms %}
+        <div class="small" style="margin-top:4px">Active model(s):
+          {% for a in ms %}<code>{{ a.version }}</code> <span class="muted">({{ a.model_type }})</span>{% if not loop.last %}, {% endif %}{% endfor %}</div>
+        <div class="small muted">Decision rule:
+          {% if rule %}<strong>{{ rule.method }}</strong> (v{{ rule.version }})
+          {% elif ms|length > 1 %}<strong>average</strong> (default){% else %}<strong>single</strong>{% endif %}</div>
+      {% else %}<div class="small muted">synthetic stand-in</div>{% endif %}
+    </div>
+  {% endfor %}
+  </div>
+  {% if user.role == 'internal' %}<p class="small" style="margin:8px 0 0">
+    <a href="/models">Manage models</a> · <a href="/rules">Decision rules</a></p>{% endif %}
+</div>
+
 {% if not run %}
   <div class="warnbox">No published scoring run yet.
     {% if user.role == 'internal' %} Upload a file on <a href="/runs">Runs</a>,

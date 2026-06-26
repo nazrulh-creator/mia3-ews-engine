@@ -43,7 +43,8 @@
     {% if user.role in ['internal','branch'] %}<a href="/review">Review</a>{% endif %}
     {% if user.role == 'internal' %}
       <a href="/runs">Runs</a><a href="/tuning">Tuning</a>
-      <a href="/models">Models</a><a href="/performance">Performance</a><a href="/audit">Audit</a>
+      <a href="/models">Models</a><a href="/rules">Decision rules</a>
+      <a href="/performance">Performance</a><a href="/audit">Audit</a>
     {% endif %}
     <a href="/learnings">Learnings</a>
     {% if user.role == 'internal' %}<a href="/demo">Demo</a>{% endif %}

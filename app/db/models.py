@@ -40,6 +40,11 @@ class ModelRegistry(Base):
     version: Mapped[str] = mapped_column(String(64), index=True)
     segment: Mapped[str] = mapped_column(String(16), default="Guarantee", index=True)
     kind: Mapped[str] = mapped_column(String(32))
+    # Decision-model type: synthetic | xgboost (uploaded artifact) | logistic
+    # (glass-box logistic regression) | ols (glass-box linear regression).
+    model_type: Mapped[str] = mapped_column(String(24), default="synthetic", index=True)
+    # Glass-box coefficient spec for logistic/ols: {intercept, coefficients{...}, standardize}.
+    spec: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
     is_synthetic: Mapped[bool] = mapped_column(Boolean, default=True)
     artifact_path: Mapped[Optional[str]] = mapped_column(String(512), nullable=True)
     status: Mapped[str] = mapped_column(String(16), default="draft")  # draft|active|retired
@@ -83,6 +88,24 @@ class CalibrationConfig(Base):
     method: Mapped[str] = mapped_column(String(32), default="identity")  # identity|linear|platt
     params: Mapped[dict] = mapped_column(JSON, default=dict)
     status: Mapped[str] = mapped_column(String(16), default="proposed")
+    note: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    created_by: Mapped[str] = mapped_column(String(64))
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
+    approved_by: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    approved_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+
+
+class DecisionRule(Base):
+    """Governed ensemble decision rule — how a segment's active models combine
+    into the early-warning trigger. One active rule per segment; dual-controlled."""
+    __tablename__ = "decision_rules"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    version: Mapped[int] = mapped_column(Integer)
+    segment: Mapped[str] = mapped_column(String(16), default="Guarantee", index=True)
+    name: Mapped[str] = mapped_column(String(128))
+    method: Mapped[str] = mapped_column(String(16), default="average")  # single|average|weighted|max|min|median|majority
+    params: Mapped[dict] = mapped_column(JSON, default=dict)  # weights{version:w}, threshold
+    status: Mapped[str] = mapped_column(String(16), default="proposed")  # proposed|active|retired
     note: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     created_by: Mapped[str] = mapped_column(String(64))
     created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)

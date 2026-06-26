@@ -294,14 +294,23 @@ p("Beyond per-account flags, the engine watches concentrations. When the share o
   "are ignored).")
 
 h(1, "7. Governance design")
-h(2, "7.1 Model registry and lifecycle")
-p("Model versions move through states draft → active → retired. Registration (maker) "
-  "creates a draft with an artifact (uploaded or path) and back-test metrics. Activation "
-  "(checker) is dual-controlled — the registrant cannot activate their own model — and "
-  "pre-flights the artifact against the data contract before swapping it in; the previous "
-  "active model is retired and the next run uses the new one. Retiring the live model is "
-  "single-control and immediate (the safe direction); scoring falls back to the synthetic "
-  "stand-in. The active model is locked against edits until retired.")
+h(2, "7.1 Model registry, types and lifecycle")
+p("Several decision-model types are supported: a synthetic stand-in; glass-box logistic "
+  "and OLS/linear regressions defined in-app by a coefficient spec (intercept + per-feature "
+  "weights, validated against the data contract); and uploaded ML artifacts (XGBoost / "
+  "scikit-learn). Model versions move through states draft → active → retired. Registration "
+  "(maker) creates a draft; activation (checker) is dual-controlled — the registrant cannot "
+  "activate their own model — and pre-flights the spec/artifact against the data contract. "
+  "More than one model may be active per segment; activation adds to the active set. "
+  "Retiring is single-control and immediate (the safe direction).")
+h(2, "7.1a Decision rules (ensembles)")
+p("When more than one model is active for a segment, the early-warning trigger is an "
+  "ensemble defined by the segment's active Decision Rule. Methods: single, average, "
+  "weighted (by model version), max, min, median, and majority (share of models above a "
+  "threshold). Rules are versioned and dual-controlled (maker proposes, a different checker "
+  "approves); one rule is active per segment, and deactivating reverts to the default "
+  "(single model, or an average of several). The dashboard persistently shows which models "
+  "and which rule are shaping each segment's picture.")
 h(2, "7.2 Threshold and weight tuning")
 p("The 50/30/20 weights and band cut-offs are changed through a maker→preview→checker flow. "
   "A proposal must pass validation (weights sum to 1.0; cut-offs ordered), can be previewed "

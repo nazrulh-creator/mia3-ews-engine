@@ -39,6 +39,9 @@ SCREENS: Dict[str, str] = {
     "performance": ("How the model is performing against the go-live goals "
                     "(Recall, AUC, false-negative rate) once realised MIA 3 "
                     "outcomes are recorded — per run and segment."),
+    "rules": ("Decision rules govern how a segment's active models combine into "
+              "the early-warning trigger (single, average, weighted, max, min, "
+              "median or majority). One active rule per segment, dual-controlled."),
     "contract": ("The exact data contract: every column the monthly file must "
                  "contain, its type, and how missing values are handled."),
     "login": "Sign in. Your role decides what you can see and do."
@@ -118,7 +121,22 @@ FIELDS: Dict[str, str] = {
     "model_segment": "Which portfolio this model scores — Guarantee or Financing. "
                      "One model is active per segment, and accounts are routed to "
                      "their segment's model.",
+    "model_type": "synthetic = built-in stand-in; logistic / ols = glass-box "
+                  "models you define by a coefficient spec; xgboost = an uploaded "
+                  "ML artifact (also covers sklearn pickles).",
+    "model_spec": "JSON for a glass-box model: {\"intercept\": .., \"standardize\": "
+                  "true, \"coefficients\": {feature: weight, ...}}. Unlisted features "
+                  "are treated as weight 0; logistic applies a sigmoid, OLS clips to 0–1.",
     "model_name": "A human-readable model name, e.g. 'MIA3 XGBoost'.",
+    # Decision rules
+    "rule_segment": "Which segment this ensemble rule applies to.",
+    "rule_method": "How the segment's active models combine: single, average, "
+                   "weighted, max (flag if any high), min, median, or majority.",
+    "rule_threshold": "Majority only — a model counts as 'flagging' at or above this "
+                      "probability; the combined value is the share of models that flag.",
+    "rule_weights": "Weighted only — JSON mapping each active model version to a weight, "
+                    "e.g. {\"v-a\": 0.6, \"v-b\": 0.4}. Missing models default to equal.",
+    "rule_note": "Why this combination. Recorded on the audit trail.",
     "model_version": "A unique version string, e.g. '2026-Q2'. Two entries cannot "
                      "share a version.",
     "model_kind": "real = a trained artifact you supply; synthetic = the built-in "
@@ -145,9 +163,11 @@ DATA_ENTRY_FIELDS: Dict[str, list] = {
                        "outcome_actual", "outcome_intervention", "outcome_exit"],
     "learnings": ["learning_category", "learning_linked", "learning_title",
                   "learning_body"],
-    "models": ["model_name", "model_version", "model_segment", "model_kind",
-               "model_artifact", "model_auc", "model_recall", "model_precision",
-               "model_fn", "model_notes"],
+    "models": ["model_name", "model_version", "model_segment", "model_type",
+               "model_spec", "model_artifact", "model_auc", "model_recall",
+               "model_precision", "model_fn", "model_notes"],
+    "rules": ["rule_segment", "rule_method", "rule_threshold", "rule_weights",
+              "rule_note"],
 }
 
 
