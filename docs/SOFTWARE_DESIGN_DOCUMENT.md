@@ -1,13 +1,13 @@
 # MIA3 Early Warning Engine — Software Design Document
 
-*Version 1.0 · engine v0.9.0 · June 2026 · Strategic Data Analytics (SDA)*
+*Version 1.1 · engine v0.9.0 · June 2026 · Strategic Data Analytics (SDA)*
 
 ## 1. Document control
 
 | Field | Value |
 | --- | --- |
 | Title | MIA3 Early Warning Engine — Software Design Document |
-| Version | 1.0 (engine v0.9.0) |
+| Version | 1.1 (engine v0.9.0) |
 | Status | Draft for review |
 | Owner | Strategic Data Analytics (SDA), a team within CGC Malaysia |
 | Prepared for | Nazrul — Chief Strategy Officer |
@@ -141,20 +141,23 @@ Missing-value policy, per column:
 
 ### 5.2 Persistence model
 
-Eleven tables, created on first run; additive column migrations are applied at startup (SQLite/Postgres ALTER TABLE ADD COLUMN for new columns).
+Fourteen tables, created on first run; additive column migrations are applied at startup (SQLite/Postgres ALTER TABLE ADD COLUMN for new columns — e.g. model_registry.segment / model_type / spec, account_scores.segment / model_version).
 
 | Table | Purpose |
 | --- | --- |
 | users | Accounts, roles, FI scope, UI mode. |
-| model_registry | Registered model versions, status, back-test metrics, artifact path, registrant/approver. |
+| model_registry | Registered model versions per segment — type (synthetic / xgboost / logistic / ols), spec, status, back-test metrics, registrant/approver. |
+| decision_rules | Governed ensemble rules per segment (how active models combine); versioned, dual-controlled. |
 | threshold_config | Versioned 50/30/20 weights and band cut-offs; dual-controlled. |
 | calibration_config | Versioned calibration mapping (identity/linear/platt); dual-controlled. |
-| scoring_runs | One row per run: source, model, counts, quality report, checkpoint status. |
-| account_scores | One row per scored account: probability, ranks, risk score, band, confidence, routing, stored explanation and features. |
+| scoring_runs | One row per run: source, model summary, counts, quality report, checkpoint status. |
+| account_scores | One row per scored account: segment, model version, probability, ranks, risk score, band, confidence, routing, stored explanation and features. |
 | review_decisions | Human review outcomes (confirm/override/escalate) with reason. |
+| outcomes | Realised MIA 3 outcomes (+ intervention / exit reason) for performance monitoring and re-calibration. |
 | audit_events | Append-only, hash-chained event log. |
 | learnings | Outcomes, reviewer notes and change reasoning. |
 | portfolio_alerts | Early-warning ladder alerts at FI/sector level. |
+| app_settings | Key-value app settings (e.g. which visualisation tiers are enabled). |
 | problem_reports | Universal error reports with audit linkage. |
 
 ### 5.3 Environment-separated data
@@ -217,6 +220,24 @@ A one-page Word (.docx) case report is generated on demand for any account: the 
 ### 6.8 Portfolio early-warning ladder
 
 Beyond per-account flags, the engine watches concentrations. When the share of an FI's or a sector's book in the high-risk bands crosses a governed level it raises a portfolio-level alert: Watch at ≥ 15%, Halt at ≥ 30% (groups smaller than five accounts are ignored).
+
+### 6.9 Segment routing (Guarantee / Financing)
+
+The deck evaluates separate Guarantee and Financing models, so the data contract carries a `segment` field and the engine routes each account to its segment's model. More than one model may be active per segment; an Ensemble (single / average / weighted / max / min / median / majority) combines them per the active Decision Rule (§7.1a). The dashboard persistently shows which models and rule are shaping each segment's picture.
+
+### 6.10 Realised-outcome capture and performance monitoring
+
+Once realised MIA 3 outcomes are recorded against scored accounts (did it reach MIA 3, was an intervention applied, any exit reason), the engine computes Recall, Precision, the false-negative rate and AUC (Mann–Whitney) per run and segment, and checks them against the deck's go-live goals: Recall > 75%, AUC > 65%, FN < 20%. The Performance screen shows these as a table and as trend lines vs the goal lines. The intervention rate is surfaced as a selective-labels caveat, since outcomes influenced by an action bias the labels. (Classic reject inference does not apply — MIA3 scores the existing book, not applicants it never observes; the genuine risk is selective labels / censoring, which the captured intervention and exit-reason fields exist to correct for in re-calibration.)
+
+### 6.11 Visualisation layer
+
+A dependency-free, server-rendered SVG chart kit (app/core/charts.py), themed with the CGC palette and the four band colours, FI-scoped and printable, organised in three tiers that are individually switchable (§11a):
+
+- Tier 1 — portfolio: risk-band donut, exposure-by-band bars, the probability × exposure risk map (the 'act-first' quadrant), a stacked-area trend, and band heatmaps by FI / scheme / sector.
+- Tier 2 — change & performance: the Movers screen (run-over-run band migration — transition matrix and ranked top deteriorating/improving accounts), model-performance trend lines, and early-warning ladder gauges.
+- Tier 3 — analytics: a probability-distribution histogram, ensemble agreement/dispersion (member probabilities across a sample), a branch heatmap, and SVG chart export.
+
+> **Note —** Charts read only data the engine already stores — no new capture. Large scatters are sampled. A literal Malaysia choropleth is deferred (it needs a bundled map asset that would compromise the offline / no-CDN posture); a branch heatmap stands in for now.
 
 ## 7. Governance design
 
@@ -301,13 +322,18 @@ Every screen has a problem-report control that captures the screen, user and tim
 
 | Route | Purpose |
 | --- | --- |
-| /dashboard | Portfolio overview, breakdowns, trend, ladder alerts |
-| /accounts, /accounts/{id} | Account list/worklist; account detail + case report |
+| /dashboard | Portfolio overview: KPIs, charts (donut, risk map, trend, heatmaps), ladder |
+| /movers | Run-over-run band migration — transition matrix + top movers |
+| /accounts, /accounts/{id} | Account list/worklist; account detail + case report + outcome capture |
 | /review | Human review queue |
 | /runs | Upload / manual run; run history + data-quality report |
 | /tuning | Threshold + calibration dual-control workflow |
-| /models, /models/* | Model registry: register, edit, activate, retire |
+| /models, /models/* | Model registry: register, edit, activate, retire; ensemble dispersion |
+| /rules, /rules/* | Decision-rule (ensemble) governance per segment |
+| /performance, /performance/* | Model performance vs goals; outcome simulation (TEST) |
 | /audit | Hash-verified audit trail |
+| /config, /config/* | Configuration — visualisation-tier toggles |
+| /export/*.svg | Chart SVG export for decks |
 | /learnings, /demo, /contract | Learnings library; demonstration mode; data contract |
 | /guide, /quickstart | Context-sensitive user guide and quick start |
 
@@ -338,6 +364,10 @@ Containerised (python:3.11-slim) and deployed to Fly.io as a separate app with i
 ### 11.3 Migrations and storage
 
 Schema is created on startup; additive column migrations run idempotently. Uploaded model artifacts are stored under the data volume so they persist across restarts.
+
+### 11.4 Visualisation-tier configuration
+
+The Configuration screen (/config, internal-risk) turns the three chart tiers on or off — individually, in combination, or all at once. Flags persist in app_settings and are mirrored in a small in-process cache (refreshed on change and startup) so templates gate charts without a per-render DB hit; changes are audited. When a tier is off its charts hide but the underlying tables and counts always remain (trend and ladder fall back to a table and text pills). A single web worker keeps the cache authoritative; multi-worker deployments would read the flag per request.
 
 ## 12. Quality assurance
 
@@ -383,12 +413,16 @@ Because the code is AI-generated, it is treated as untrusted until proven. A gol
 | 5 | Review flow and dual-control tuning | Delivered |
 | 6 | Demo mode, learnings, scheduling, deployment | Delivered |
 | + | In-app user guide, tooltips, model-registry management | Delivered |
+| + | Guarantee/Financing segments; model types (logistic/OLS) + ensemble decision rules | Delivered |
+| + | Outcome capture + model-performance monitoring vs goals | Delivered |
+| + | Visualisation layer (Tiers 1–3) + Configuration toggles; CGC palette | Delivered |
 
 ## 16. Roadmap
 
 - Promote the real back-tested XGBoost artifact via the registry / MIA3_MODEL_PATH.
 - Managed Postgres in production so the scheduled scorer shares state with the web app.
 - Model-drift watch — a monthly check on input drift against the training distribution.
+- A literal Malaysia branch choropleth (needs a bundled map asset) and PNG chart export.
 - Scheduled per-FI exports; a live database feed connector.
 - Optional expected-loss economics on at-risk exposure.
 
@@ -399,6 +433,7 @@ Because the code is AI-generated, it is treated as untrusted until proven. A gol
 | account_id | str | yes | reject | Unique account / application number |
 | fi_id | str | yes | reject | FI code; row-level access key |
 | fi_name | str | no | default | FI display name |
+| segment | str | no | default 'Guarantee' | Portfolio segment — Guarantee or Financing (routes to its model) |
 | scheme | str | yes | reject | Guarantee scheme code |
 | sector | str | yes | reject | Economic sector |
 | branch | str | no | default | Originating CGC branch |
