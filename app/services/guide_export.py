@@ -17,8 +17,8 @@ from docx.shared import Pt, RGBColor
 
 from app import guide_content
 
-SDA = RGBColor(0x2B, 0x3A, 0x55)
-ACCENT = RGBColor(0x46, 0x61, 0x8F)
+SDA = RGBColor(0x00, 0x3A, 0x70)     # CGC Blue
+ACCENT = RGBColor(0x4B, 0x6E, 0xEC)  # Royal Blue
 _INLINE = {"b", "strong", "em", "i", "code", "span", "a"}
 
 
@@ -189,8 +189,8 @@ def build_quickstart_docx() -> bytes:
             "Demo logins (TEST, synthetic): internal/internal123, checker/checker123, "
             "branch/branch123, fi_mbb/fi123."]),
         ("2 · Environments — check the colour", [
-            "LIVE = green bar (real monitoring). TEST = amber bar + watermark + TEST- ids "
-            "(synthetic sandbox).",
+            "LIVE = CGC-blue bar (real monitoring). TEST = CGC-orange bar + watermark + "
+            "TEST- ids (synthetic sandbox).",
             "Separate databases; test data never reaches LIVE."]),
         ("3 · Your first look (30 seconds)", [
             "Sign in as internal.",

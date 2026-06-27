@@ -64,7 +64,7 @@ def build_case_report(score: AccountScore, *, run_ref: str) -> bytes:
         warn = doc.add_paragraph()
         r = warn.add_run("TEST ENVIRONMENT — NOT LIVE DATA")
         r.bold = True
-        r.font.color.rgb = RGBColor(0xD9, 0x8A, 0x00)
+        r.font.color.rgb = RGBColor(0xB5, 0x61, 0x0C)  # CGC Orange (readable on white)
 
     meta = doc.add_paragraph()
     meta.add_run(f"Account {score.account_id}").bold = True

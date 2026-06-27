@@ -14,7 +14,7 @@ from typing import Dict, List, Optional
 
 # Band colours reused in the visual cues (match app/static/app.css).
 C_VHIGH, C_HIGH, C_MOD, C_LOW = "#c0392b", "#e67e22", "#f1c40f", "#27ae60"
-C_SDA, C_ACCENT = "#2b3a55", "#46618f"
+C_SDA, C_ACCENT = "#003A70", "#4B6EEC"  # CGC Blue, Royal Blue
 
 # --- Reusable inline-SVG visual cues --------------------------------------
 SYMBOLS_SVG = f"""
@@ -164,13 +164,13 @@ SECTIONS: List[Dict[str, str]] = [
 <p>The engine runs two ringfenced environments. Always check which one you are in
 before acting — the colour of the top bar tells you instantly.</p>
 <table><tr><th>Environment</th><th>What it is</th><th>Visual cue</th></tr>
-<tr><td><span class="badge" style="background:#1f8f4e">LIVE</span></td>
-<td>Real monitoring. Only production models drive outcomes.</td><td>Green top bar, no watermark.</td></tr>
-<tr><td><span class="badge" style="background:#d98a00">TEST</span></td>
+<tr><td><span class="badge" style="background:#003A70">LIVE</span></td>
+<td>Real monitoring. Only production models drive outcomes.</td><td>CGC-blue top bar, no watermark.</td></tr>
+<tr><td><span class="badge" style="background:#FF8819;color:#3a2400">TEST</span></td>
 <td>Ringfenced sandbox for demonstration and calibration trials. Separate
-database and audit chain.</td><td>Amber bar, <code>TEST — NOT LIVE DATA</code> watermark, <code>TEST-</code> run ids.</td></tr></table>
+database and audit chain.</td><td>CGC-orange bar, <code>TEST — NOT LIVE DATA</code> watermark, <code>TEST-</code> run ids.</td></tr></table>
 {_steps(
- "<b>Read the top bar.</b> Green = LIVE, amber = TEST.",
+ "<b>Read the top bar.</b> Blue = LIVE, orange = TEST.",
  "<b>TEST is the default.</b> LIVE must be set deliberately by an administrator (MIA3_ENV=LIVE) — so LIVE is never reached by accident.",
  "<b>Test data never reaches LIVE.</b> The two environments have separate databases and audit chains.")}
 {_warn("Nothing is published to the FI or branch views, deployed to LIVE, or sent to "

@@ -1,18 +1,26 @@
 :root{
-  --ink:#1f2430; --muted:#6b7280; --line:#e4e7ec; --bg:#f6f7f9; --card:#fff;
-  --sda:#2b3a55; --sda-2:#46618f; --accent:#46618f;
+  /* CGC Malaysia palette — CGC Blue #003A70 + CGC Orange #FF8819,
+     with Royal Blue #4B6EEC (secondary) for accents. Risk-band colours
+     below stay semantic (red/orange/amber/green) per the EWS deck. */
+  --ink:#1f2430; --muted:#667085; --line:#e2e8f0; --bg:#f4f7fb; --card:#fff;
+  --sda:#003A70;            /* CGC Blue — primary chrome */
+  --sda-2:#4B6EEC;          /* Royal Blue — secondary accent / hover */
+  --accent:#1E5AA8;         /* readable mid CGC-blue for links */
+  --cgc-orange:#FF8819;     /* CGC Orange — fills / env / highlights */
+  --cgc-orange-ink:#B5610C; /* readable orange for text on light */
   --vhigh:#c0392b; --high:#e67e22; --mod:#f1c40f; --low:#27ae60;
 }
 *{box-sizing:border-box}
-body{margin:0;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+body{margin:0;font-family:Calibri,"Segoe UI",-apple-system,Roboto,Helvetica,Arial,sans-serif;
   color:var(--ink);background:var(--bg);font-size:14.5px;line-height:1.5}
 a{color:var(--accent);text-decoration:none}
 a:hover{text-decoration:underline}
 .watermark{position:fixed;inset:0;pointer-events:none;z-index:0;display:flex;
-  align-items:center;justify-content:center;font-size:7vw;color:rgba(217,138,0,.07);
+  align-items:center;justify-content:center;font-size:7vw;color:rgba(255,136,25,.09);
   transform:rotate(-24deg);font-weight:800;letter-spacing:.1em}
 .envbar{color:#fff;text-align:center;font-weight:700;font-size:12px;
   letter-spacing:.08em;padding:5px;position:relative;z-index:2}
+.env-test .envbar{color:#5a3300}  /* dark text for contrast on CGC Orange */
 .topbar{display:flex;justify-content:space-between;align-items:center;
   background:var(--card);border-bottom:1px solid var(--line);padding:12px 22px;position:relative;z-index:2}
 .brand{display:flex;align-items:center;gap:12px}
@@ -86,7 +94,7 @@ button:hover{filter:brightness(1.08)}
 .pill{font-size:11px;padding:2px 8px;border-radius:999px;background:#eef2f8;color:#33415c}
 .login-wrap{max-width:380px;margin:8vh auto}
 .login-wrap .card{padding:26px}
-.tag-test{color:var(--high);font-weight:700}
+.tag-test{color:var(--cgc-orange-ink);font-weight:700}
 .small{font-size:12px}
 
 /* ---- User Guide ---- */

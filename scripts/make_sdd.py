@@ -553,7 +553,7 @@ def render_docx(path: Path) -> None:
     from docx.oxml.ns import qn
     from docx.shared import Pt, RGBColor
 
-    SDA = RGBColor(0x2B, 0x3A, 0x55)
+    SDA = RGBColor(0x00, 0x3A, 0x70)  # CGC Blue
     doc = Document()
     styles = doc.styles
     styles["Normal"].font.name = "Calibri"
@@ -615,7 +615,7 @@ def render_docx(path: Path) -> None:
             cr.font.name = "Consolas"; cr.font.size = Pt(9.5)
         elif kind == "note":
             np_ = doc.add_paragraph(); nr = np_.add_run("Note — " + blk[1])
-            nr.italic = True; nr.font.color.rgb = RGBColor(0x46, 0x61, 0x8F)
+            nr.italic = True; nr.font.color.rgb = RGBColor(0x4B, 0x6E, 0xEC)
         elif kind == "t":
             headers, rows = blk[1], blk[2]
             table = doc.add_table(rows=1, cols=len(headers))

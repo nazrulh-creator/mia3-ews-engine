@@ -67,7 +67,7 @@
     {% for k, v in score.confidence_components.items() %}
     <div style="min-width:160px">
       <div class="small muted">{{ k.replace('_',' ') }}</div>
-      <div class="bar"><span style="width:{{ v|round(0) }}%;background:#46618f"></span></div>
+      <div class="bar"><span style="width:{{ v|round(0) }}%;background:#4B6EEC"></span></div>
       <div class="small right">{{ v|round(0)|int }}</div>
     </div>
     {% endfor %}

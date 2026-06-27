@@ -62,7 +62,8 @@ class Settings:
     # --- UI ringfence cues -------------------------------------------------
     @property
     def banner_color(self) -> str:
-        return "#1f8f4e" if self.is_live else "#d98a00"  # green LIVE / amber TEST
+        # On-brand environment cue: CGC Blue for LIVE, CGC Orange for TEST.
+        return "#003A70" if self.is_live else "#FF8819"
 
     @property
     def env_watermark(self) -> Optional[str]:
