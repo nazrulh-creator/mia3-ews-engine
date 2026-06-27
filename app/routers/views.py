@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 
 from app.auth.deps import current_user, fi_scope, require_internal, require_user
 from app.config import get_settings
+from app.core import charts
 from app.core import explain as E
 from app.core.features import MODEL_FEATURE_NAMES, contract_as_dict
 from app.core.model import get_active_model
@@ -42,7 +43,7 @@ def dashboard(request: Request, user: User = Depends(require_user),
     scope = fi_scope(user)
     run = runs.latest_run(db)
     counts, by_fi, by_scheme, by_sector, by_segment, alerts = {}, [], [], [], [], []
-    exposure, points = {}, []
+    exposure, points, prob_values, by_branch = {}, [], [], []
     if run:
         counts = runs.band_counts(db, run.id, fi_id=scope)
         by_fi = runs.breakdown(db, run.id, "fi_id", fi_id=scope)
@@ -51,6 +52,8 @@ def dashboard(request: Request, user: User = Depends(require_user),
         by_segment = runs.breakdown(db, run.id, "segment", fi_id=scope)
         exposure = runs.exposure_by_band(db, run.id, fi_id=scope)
         points = runs.risk_points(db, run.id, fi_id=scope)
+        prob_values = runs.probability_values(db, run.id, fi_id=scope)
+        by_branch = runs.breakdown(db, run.id, "branch", fi_id=scope)
         alerts = db.execute(select(PortfolioAlert).where(PortfolioAlert.run_ref == run.run_ref)
                             ).scalars().all()
         if scope:
@@ -62,7 +65,28 @@ def dashboard(request: Request, user: User = Depends(require_user),
         request, user, "dashboard", run=run, counts=counts, by_fi=by_fi,
         by_scheme=by_scheme, by_sector=by_sector, by_segment=by_segment,
         alerts=alerts, trend=trend, active_models=active_models,
-        active_rules=active_rules, exposure=exposure, points=points))
+        active_rules=active_rules, exposure=exposure, points=points,
+        prob_values=prob_values, by_branch=by_branch))
+
+
+# --- Chart SVG export (Tier 3) --------------------------------------------
+def _svg_download(svg: str, filename: str) -> Response:
+    return Response(content=svg or "<svg/>", media_type="image/svg+xml",
+                    headers={"Content-Disposition": f'attachment; filename="{filename}"'})
+
+
+@router.get("/export/risk-map.svg")
+def export_risk_map(user: User = Depends(require_user), db: Session = Depends(get_db)):
+    scope = fi_scope(user)
+    run = runs.latest_run(db)
+    pts = runs.risk_points(db, run.id, fi_id=scope) if run else []
+    return _svg_download(charts.scatter(pts), "mia3_risk_map.svg")
+
+
+@router.get("/export/trend.svg")
+def export_trend(user: User = Depends(require_user), db: Session = Depends(get_db)):
+    scope = fi_scope(user)
+    return _svg_download(charts.stacked_area(runs.trend(db, fi_id=scope)), "mia3_trend.svg")
 
 
 # --- Movers (run-over-run band migration) ---------------------------------

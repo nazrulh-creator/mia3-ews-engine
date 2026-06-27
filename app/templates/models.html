@@ -35,6 +35,23 @@
   {% endfor %}
 </div>
 
+{% if viz_flags().tier3 and dispersions %}
+<div class="card">
+  <h2>Ensemble agreement <span class="small muted">— where the models disagree</span></h2>
+  {% for d in dispersions %}
+  <div style="margin-bottom:12px">
+    <div class="small"><strong>{{ d.segment }}</strong> — {{ d.members|length }} models,
+      average spread {{ d.spread }} across {{ d.n }} accounts
+      ({% for mver in d.members %}<code>{{ mver }}</code> {% endfor %})</div>
+    {{ charts.lines(d.series, d.x, height=160) | safe }}
+  </div>
+  {% endfor %}
+  <p class="small muted">Each line is one model's probability across a sample of accounts
+    (sorted by mean). Where the lines fan apart the models disagree — those accounts merit
+    a closer look. A high average spread suggests the ensemble is doing real work.</p>
+</div>
+{% endif %}
+
 <div class="box">
   <h2>Register a new model</h2>
   <p class="small muted">Creates a <b>draft</b>. A different person must activate it

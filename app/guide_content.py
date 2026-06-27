@@ -450,6 +450,19 @@ real data.</p>
 {_warn("Demonstration data is synthetic and clearly flagged. No real borrower data is "
        "ever used in development or testing.")}"""},
 
+    {"id": "config", "num": "17a", "title": "Configuration — visualisation layers", "body": f"""
+<p>The <b>Config</b> screen (internal risk) controls which chart layers are shown, so you
+can tune the interface to your audience — a dense analytical view, or a stripped-back
+tables-only view for a committee.</p>
+<table><tr><th>Layer</th><th>Charts it controls</th></tr>
+<tr><td><b>Tier 1 — portfolio</b></td><td>Risk-band donut, exposure-by-band bars, the risk map, the stacked-area trend, and band heatmaps.</td></tr>
+<tr><td><b>Tier 2 — change &amp; performance</b></td><td>The Movers screen, model-performance trend lines, and the ladder gauges.</td></tr>
+<tr><td><b>Tier 3 — analytics</b></td><td>Probability histogram, ensemble agreement/dispersion, branch heatmap, and chart SVG exports.</td></tr></table>
+{_steps(
+ "Tick the layers you want, or use <b>Turn all on</b> / <b>Turn all off</b>.",
+ "When a layer is off its charts hide, but the underlying tables and counts always remain — no data is lost.",
+ "The setting applies to everyone and is recorded on the audit trail.")}"""},
+
     {"id": "glossary", "num": "18", "title": "Glossary and risk bands", "body": f"""
 <table><tr><th>Term</th><th>Meaning</th></tr>
 <tr><td>MIA 3</td><td>Months-in-Arrears 3 — the deterioration event the model predicts.</td></tr>
@@ -473,7 +486,7 @@ SCREEN_TO_SECTION: Dict[str, str] = {
     "worklist": "review", "review": "review", "runs": "runs", "tuning": "tuning",
     "demo": "demo", "learnings": "learnings", "audit": "audit", "models": "models",
     "contract": "contract", "login": "live-test", "performance": "performance",
-    "rules": "rules", "movers": "movers",
+    "rules": "rules", "movers": "movers", "config": "config",
 }
 
 

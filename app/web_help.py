@@ -47,7 +47,10 @@ SCREENS: Dict[str, str] = {
               "median or majority). One active rule per segment, dual-controlled."),
     "contract": ("The exact data contract: every column the monthly file must "
                  "contain, its type, and how missing values are handled."),
-    "login": "Sign in. Your role decides what you can see and do."
+    "login": "Sign in. Your role decides what you can see and do.",
+    "config": ("Configuration — turn the visualisation layers (Tier 1 portfolio "
+               "charts, Tier 2 change & performance, Tier 3 analytics) on or off, "
+               "individually or all at once. Tables and counts always remain."),
 }
 
 # field key -> info-icon help text.

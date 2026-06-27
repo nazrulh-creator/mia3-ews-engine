@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Configuration</h1>
+
+<div class="box">
+  <h2>Visualisation layers</h2>
+  <p class="small muted">Turn the chart layers on or off — individually, in combination,
+    or all at once. When a layer is off, the underlying tables and counts still show; only
+    its charts are hidden. Changes apply to everyone and are recorded on the audit trail.</p>
+
+  <form method="post" action="/config/viz">
+    <label style="max-width:560px"><input type="checkbox" name="tier1" value="1" style="width:auto"
+      {{ 'checked' if viz.tier1 }}>
+      <strong>Tier 1 — portfolio charts.</strong> Risk-band donut, exposure-by-band bars, the
+      probability × exposure risk map, stacked-area trend, and band heatmaps.</label>
+    <label style="max-width:560px"><input type="checkbox" name="tier2" value="1" style="width:auto"
+      {{ 'checked' if viz.tier2 }}>
+      <strong>Tier 2 — change &amp; performance.</strong> The Movers screen, model-performance
+      trend lines, and the early-warning ladder gauges.</label>
+    <label style="max-width:560px"><input type="checkbox" name="tier3" value="1" style="width:auto"
+      {{ 'checked' if viz.tier3 }}>
+      <strong>Tier 3 — analytics.</strong> Probability-distribution histogram, ensemble
+      agreement/dispersion, branch heatmap, and chart SVG exports.</label>
+    <p><button type="submit">Save</button></p>
+  </form>
+
+  <div class="row" style="border-top:1px solid var(--line);padding-top:12px">
+    <form method="post" action="/config/viz" class="inline">
+      <input type="hidden" name="preset" value="all_on">
+      <button class="secondary small">Turn all on</button></form>
+    <form method="post" action="/config/viz" class="inline">
+      <input type="hidden" name="preset" value="all_off">
+      <button class="secondary small">Turn all off</button></form>
+  </div>
+
+  <p class="small muted" style="margin-top:10px">Currently:
+    Tier 1 <strong>{{ 'on' if viz.tier1 else 'off' }}</strong> ·
+    Tier 2 <strong>{{ 'on' if viz.tier2 else 'off' }}</strong> ·
+    Tier 3 <strong>{{ 'on' if viz.tier3 else 'off' }}</strong>.</p>
+</div>
+{% endblock %}

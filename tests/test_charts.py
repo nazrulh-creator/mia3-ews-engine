@@ -68,3 +68,12 @@ def test_gauge_zone_and_label():
     g = charts.gauge(0.40)   # >= halt
     assert "<svg" in g and "40%" in g and "halt" in g and "watch" in g
     assert charts.gauge(0.05).count("<rect") == 2  # track + fill
+
+
+def test_histogram_renders_with_cutoffs():
+    svg = charts.histogram([0.05, 0.1, 0.6, 0.9, 0.95, 0.3], bins=10)
+    assert "<svg" in svg and "<rect" in svg and "25%" in svg and "75%" in svg
+
+
+def test_histogram_empty():
+    assert charts.histogram([]) == ""

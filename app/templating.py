@@ -9,6 +9,7 @@ from app.auth.deps import ROLE_LABELS
 from app import web_help
 from app import guide_content
 from app.core import charts as charts_kit
+from app.services.appsettings import viz_flags
 
 templates = Jinja2Templates(directory=str(BASE_DIR / "app" / "templates"))
 
@@ -31,6 +32,7 @@ templates.env.globals.update(
     guide_anchor=guide_content.section_for_screen,
     charts=charts_kit,
     heat=heat,
+    viz_flags=viz_flags,
 )
 
 

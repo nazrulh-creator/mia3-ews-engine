@@ -220,6 +220,40 @@ def lines(series: List[Dict], x_labels: List[str], goals: List[Dict] = None,
             f'aria-label="Metric trend lines">{"".join(out)}</svg>')
 
 
+def histogram(values: Sequence[float], width: int = 540, height: int = 190,
+              bins: int = 20, cutoffs: Sequence[float] = (0.25, 0.5, 0.75)) -> str:
+    """Distribution of probabilities (0..1) with the PD-rank cut-offs marked."""
+    if not values:
+        return ""
+    pl, pr, pt, pb = 40, 12, 12, 24
+    pw, ph = width - pl - pr, height - pt - pb
+    counts = [0] * bins
+    for v in values:
+        idx = min(bins - 1, max(0, int(max(0.0, min(1.0, v)) * bins)))
+        counts[idx] += 1
+    maxc = max(counts) or 1
+    bw = pw / bins
+    out = [f'<line x1="{pl}" y1="{pt + ph}" x2="{pl + pw}" y2="{pt + ph}" stroke="var(--line)"/>']
+    for i, ct in enumerate(counts):
+        bh = (ct / maxc) * ph
+        x = pl + i * bw
+        out.append(f'<rect x="{x:.1f}" y="{pt + ph - bh:.1f}" width="{bw - 1:.1f}" '
+                   f'height="{bh:.1f}" fill="var(--sda-2)" opacity="0.85"/>')
+    for cv in cutoffs:
+        cx = pl + cv * pw
+        out.append(f'<line x1="{cx:.1f}" y1="{pt}" x2="{cx:.1f}" y2="{pt + ph}" '
+                   f'stroke="var(--ink)" stroke-dasharray="3 3" opacity="0.45"/>')
+        out.append(f'<text x="{cx:.1f}" y="{pt + 9}" font-size="9" fill="var(--muted)" '
+                   f'text-anchor="middle">{int(cv * 100)}%</text>')
+    for frac, lab in [(0, "0%"), (0.5, "50%"), (1, "100%")]:
+        out.append(f'<text x="{pl + frac * pw:.1f}" y="{height - 8}" font-size="9.5" '
+                   f'fill="var(--muted)" text-anchor="middle">{lab}</text>')
+    out.append(f'<text x="{pl + pw / 2:.0f}" y="{height}" font-size="9.5" fill="var(--muted)" '
+               f'text-anchor="middle">probability of MIA 3</text>')
+    return (f'<svg viewBox="0 0 {width} {height}" width="100%" role="img" '
+            f'aria-label="Probability distribution histogram">{"".join(out)}</svg>')
+
+
 def gauge(share: float, watch: float = 0.15, halt: float = 0.30, width: int = 300) -> str:
     """Horizontal gauge of a high-risk share against the watch/halt tripwires."""
     h, track = 18, width - 56

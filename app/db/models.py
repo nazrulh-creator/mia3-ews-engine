@@ -254,6 +254,15 @@ class Outcome(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
 
 
+class AppSetting(Base):
+    """Simple key-value app settings (e.g. which visualisation tiers are on)."""
+    __tablename__ = "app_settings"
+    key: Mapped[str] = mapped_column(String(64), primary_key=True)
+    value: Mapped[str] = mapped_column(String(255))
+    updated_by: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
+
+
 class ProblemReport(Base):
     __tablename__ = "problem_reports"
     id: Mapped[int] = mapped_column(primary_key=True)

@@ -13,8 +13,8 @@ from starlette.middleware.sessions import SessionMiddleware
 
 from app.config import BASE_DIR, get_settings
 from app.db.database import init_db, session_scope
-from app.routers import (api, auth, guide, models, performance, review, rules,
-                        tuning, views)
+from app.routers import (api, auth, config, guide, models, performance, review,
+                        rules, tuning, views)
 from app.services.seed import ensure_seed, ensure_segment_models
 
 settings = get_settings()
@@ -28,6 +28,7 @@ app.include_router(guide.router)
 app.include_router(models.router)
 app.include_router(performance.router)
 app.include_router(rules.router)
+app.include_router(config.router)
 app.include_router(views.router)
 app.include_router(review.router)
 app.include_router(tuning.router)
@@ -40,6 +41,8 @@ def _startup() -> None:
     with session_scope() as db:
         ensure_seed(db)
         ensure_segment_models(db)
+        from app.services.appsettings import load_cache
+        load_cache(db)
 
 
 @app.get("/healthz")

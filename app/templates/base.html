@@ -38,14 +38,14 @@
 
   <nav class="nav">
     <a href="/dashboard">Dashboard</a>
-    <a href="/movers">Movers</a>
+    {% if viz_flags().tier2 %}<a href="/movers">Movers</a>{% endif %}
     {% if user.role == 'branch' %}<a href="/accounts?worklist=1">Worklist</a>
     {% else %}<a href="/accounts">Accounts</a>{% endif %}
     {% if user.role in ['internal','branch'] %}<a href="/review">Review</a>{% endif %}
     {% if user.role == 'internal' %}
       <a href="/runs">Runs</a><a href="/tuning">Tuning</a>
       <a href="/models">Models</a><a href="/rules">Decision rules</a>
-      <a href="/performance">Performance</a><a href="/audit">Audit</a>
+      <a href="/performance">Performance</a><a href="/audit">Audit</a><a href="/config">Config</a>
     {% endif %}
     <a href="/learnings">Learnings</a>
     {% if user.role == 'internal' %}<a href="/demo">Demo</a>{% endif %}

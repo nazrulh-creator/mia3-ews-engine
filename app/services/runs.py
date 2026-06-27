@@ -162,7 +162,8 @@ def breakdown(db: Session, run_id: int, dimension: str,
               *, fi_id: Optional[str] = None) -> List[Dict[str, object]]:
     """Counts by band within a grouping dimension (fi_id|scheme|sector)."""
     col = {"fi_id": AccountScore.fi_id, "scheme": AccountScore.scheme,
-           "sector": AccountScore.sector, "segment": AccountScore.segment}[dimension]
+           "sector": AccountScore.sector, "segment": AccountScore.segment,
+           "branch": AccountScore.branch}[dimension]
     stmt = select(col, AccountScore.band, func.count()).where(AccountScore.run_id == run_id)
     if fi_id:
         stmt = stmt.where(AccountScore.fi_id == fi_id)
@@ -244,6 +245,15 @@ def exposure_by_band(db: Session, run_id: int, *, fi_id: Optional[str] = None) -
     for band, total in db.execute(stmt).all():
         out[band] = float(total or 0)
     return out
+
+
+def probability_values(db: Session, run_id: int, *, fi_id: Optional[str] = None,
+                       limit: int = 5000) -> List[float]:
+    """Probabilities for the latest run — for the distribution histogram."""
+    stmt = select(AccountScore.probability).where(AccountScore.run_id == run_id)
+    if fi_id:
+        stmt = stmt.where(AccountScore.fi_id == fi_id)
+    return [float(p) for (p,) in db.execute(stmt.limit(limit)).all()]
 
 
 def risk_points(db: Session, run_id: int, *, fi_id: Optional[str] = None,

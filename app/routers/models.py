@@ -21,10 +21,11 @@ from sqlalchemy.orm import Session
 
 from app.auth.deps import require_internal
 from app.config import MODELS_DIR
+from app.core.features import SEGMENTS
 from app.core.model import coefficient_template, validate_model
 from app.db.database import get_db
 from app.db.models import ModelRegistry, User
-from app.services import governance
+from app.services import analytics, appsettings, governance
 from app.templating import templates
 
 router = APIRouter()
@@ -48,9 +49,16 @@ def _render(request: Request, user: User, db: Session, *, error=None, ok=None, s
     for r in rows:
         ok_v, msg = validate_model(r.model_type, artifact_path=r.artifact_path, spec=r.spec)
         validations[r.id] = {"ok": ok_v, "msg": msg}
+    dispersions = []
+    if appsettings.viz_flags().tier3:
+        for seg in SEGMENTS:
+            d = analytics.ensemble_dispersion(db, seg)
+            if d:
+                dispersions.append(d)
     return templates.TemplateResponse("models.html", {
         "request": request, "user": user, "screen": "models", "rows": rows,
         "active": active, "rules": rules, "validations": validations,
+        "dispersions": dispersions,
         "spec_template": json.dumps(coefficient_template(), indent=2),
         "error": error, "ok": ok}, status_code=status_code)
 
