@@ -173,3 +173,67 @@ def scatter(points: Sequence[Tuple[float, float, float, str]], width: int = 560,
         for (p, e, lev, b) in points)
     return (f'<svg viewBox="0 0 {width} {height}" width="100%" role="img" '
             f'aria-label="Probability versus exposure risk map">{"".join(chrome)}{dots}</svg>')
+
+
+def lines(series: List[Dict], x_labels: List[str], goals: List[Dict] = None,
+          width: int = 540, height: int = 200, y_max: float = 1.0) -> str:
+    """Multi-line trend. series = [{name, color, values:[0..y_max or None]}].
+
+    goals = [{label, y, color}] draws dashed reference lines (e.g. the deck's
+    Recall > 0.75 / AUC > 0.65 goals).
+    """
+    if not series or len(x_labels) < 2:
+        return ""
+    pl, pr, pt, pb = 42, 12, 12, 26
+    pw, ph = width - pl - pr, height - pt - pb
+    n = len(x_labels)
+    xs = [pl + (i / (n - 1)) * pw for i in range(n)]
+
+    def yv(v: float) -> float:
+        return pt + ph - (min(max(v, 0.0), y_max) / y_max) * ph
+
+    out = [f'<line x1="{pl}" y1="{pt}" x2="{pl}" y2="{pt + ph}" stroke="var(--line)"/>',
+           f'<line x1="{pl}" y1="{pt + ph}" x2="{pl + pw}" y2="{pt + ph}" stroke="var(--line)"/>',
+           f'<text x="{pl - 6}" y="{yv(y_max) + 4:.1f}" font-size="9.5" fill="var(--muted)" text-anchor="end">{y_max:g}</text>',
+           f'<text x="{pl - 6}" y="{yv(0):.1f}" font-size="9.5" fill="var(--muted)" text-anchor="end">0</text>']
+    for g in goals or []:
+        gy = yv(g["y"])
+        out.append(f'<line x1="{pl}" y1="{gy:.1f}" x2="{pl + pw}" y2="{gy:.1f}" '
+                   f'stroke="{g.get("color", "#888")}" stroke-dasharray="4 3" opacity="0.65"/>')
+        out.append(f'<text x="{pl + pw}" y="{gy - 3:.1f}" font-size="9.5" fill="var(--muted)" '
+                   f'text-anchor="end">{g["label"]}</text>')
+    step = max(1, n // 6)
+    for i, lab in enumerate(x_labels):
+        if i % step == 0 or i == n - 1:
+            out.append(f'<text x="{xs[i]:.1f}" y="{height - 6}" font-size="9.5" fill="var(--muted)" '
+                       f'text-anchor="middle">{lab}</text>')
+    for s in series:
+        vals = s["values"]
+        pts = " ".join(f"{xs[i]:.1f},{yv(v):.1f}" for i, v in enumerate(vals) if v is not None)
+        if pts:
+            out.append(f'<polyline points="{pts}" fill="none" stroke="{s["color"]}" stroke-width="2"/>')
+            for i in range(len(vals) - 1, -1, -1):
+                if vals[i] is not None:
+                    out.append(f'<circle cx="{xs[i]:.1f}" cy="{yv(vals[i]):.1f}" r="3" fill="{s["color"]}"/>')
+                    break
+    return (f'<svg viewBox="0 0 {width} {height}" width="100%" role="img" '
+            f'aria-label="Metric trend lines">{"".join(out)}</svg>')
+
+
+def gauge(share: float, watch: float = 0.15, halt: float = 0.30, width: int = 300) -> str:
+    """Horizontal gauge of a high-risk share against the watch/halt tripwires."""
+    h, track = 18, width - 56
+    fill = (_c("Very High Risk") if share >= halt
+            else _c("High Risk") if share >= watch else _c("Low Risk"))
+    fw = min(1.0, max(0.0, share)) * track
+    wx, hx = watch * track, halt * track
+    return (f'<svg viewBox="0 0 {width} {h + 16}" width="100%" role="img" '
+            f'aria-label="High-risk share against tripwires">'
+            f'<rect x="0" y="2" width="{track}" height="{h}" rx="4" fill="var(--line)"/>'
+            f'<rect x="0" y="2" width="{fw:.1f}" height="{h}" rx="4" fill="{fill}"/>'
+            f'<line x1="{wx:.1f}" y1="0" x2="{wx:.1f}" y2="{h + 3}" stroke="{_c("High Risk")}" stroke-width="1.5"/>'
+            f'<line x1="{hx:.1f}" y1="0" x2="{hx:.1f}" y2="{h + 3}" stroke="{_c("Very High Risk")}" stroke-width="1.5"/>'
+            f'<text x="{track + 6}" y="{h - 1}" font-size="12" font-weight="700" fill="var(--ink)">{share * 100:.0f}%</text>'
+            f'<text x="{wx:.1f}" y="{h + 14}" font-size="8.5" fill="var(--muted)" text-anchor="middle">watch</text>'
+            f'<text x="{hx:.1f}" y="{h + 14}" font-size="8.5" fill="var(--muted)" text-anchor="middle">halt</text>'
+            f'</svg>')

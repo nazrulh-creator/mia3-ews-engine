@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m %}
+{% block content %}
+<h1>Movers — what changed since last run</h1>
+{% if not mig %}
+<div class="warnbox">Need two published runs to compare. Run another scoring cycle, then this
+  shows which accounts deteriorated or improved between runs.</div>
+{% else %}
+<p class="muted small">Comparing <strong>{{ mig.run_ref }}</strong> against the previous run
+  <strong>{{ mig.prev_ref }}</strong> · {{ mig.summary.total }} accounts matched.</p>
+
+<div class="grid cards">
+  <div class="card kpi"><div class="l">{{ m.band_dot('Very High Risk') }}Deteriorated</div>
+    <div class="n" style="color:#c0392b">{{ mig.summary.deteriorated }}</div></div>
+  <div class="card kpi"><div class="l">{{ m.band_dot('Low Risk') }}Improved</div>
+    <div class="n" style="color:#27ae60">{{ mig.summary.improved }}</div></div>
+  <div class="card kpi"><div class="l">Unchanged</div>
+    <div class="n">{{ mig.summary.unchanged }}</div></div>
+  <div class="card kpi"><div class="l">New / exited</div>
+    <div class="n" style="font-size:22px">{{ mig.summary.new }} / {{ mig.summary.exited }}</div></div>
+</div>
+
+<div class="row" style="margin-top:18px">
+  <div class="card" style="flex:1;min-width:340px">
+    <h2>Band transition <span class="small muted">— from → to</span></h2>
+    <table>
+      <tr><th>from \ to</th>{% for t in BANDS %}<th class="right" title="{{ t }}">{{ t.split(' ')[0] }}</th>{% endfor %}</tr>
+      {% for f in BANDS %}
+      <tr><td>{{ m.band_dot(f) }}{{ f.split(' ')[0] }}</td>
+        {% for t in BANDS %}
+        {% set cnt = mig.matrix.get(f, {}).get(t, 0) %}
+        <td class="right" style="background:{{ heat(BAND_META[t]['color'], (cnt/mig.max_cell) if mig.max_cell else 0) }}">{{ cnt or '' }}</td>
+        {% endfor %}
+      </tr>
+      {% endfor %}
+    </table>
+    <p class="small muted">Cells above the diagonal are improvements; below it, deteriorations.</p>
+  </div>
+
+  <div class="card" style="flex:1;min-width:340px">
+    <h2 style="color:#c0392b">Top deteriorating</h2>
+    {% if not mig.deteriorated %}<p class="muted small">None.</p>{% else %}
+    <table>
+      <tr><th>Account</th><th>Segment</th><th>From → to</th><th class="right">Δ score</th></tr>
+      {% for c in mig.deteriorated %}
+      <tr><td><a href="/accounts/{{ c.score_id }}">{{ c.account_id }}</a></td>
+        <td class="small">{{ c.segment }}</td>
+        <td class="small">{{ m.band_dot(c['from']) }}{{ c['from'].split(' ')[0] }} &rarr; {{ m.band_dot(c['to']) }}{{ c['to'].split(' ')[0] }}</td>
+        <td class="right" style="color:#c0392b">+{{ c.ds }}</td></tr>
+      {% endfor %}
+    </table>
+    {% endif %}
+  </div>
+</div>
+
+{% if mig.improved %}
+<div class="card" style="margin-top:16px">
+  <h2 style="color:#1d7a46">Top improving</h2>
+  <table>
+    <tr><th>Account</th><th>Segment</th><th>From → to</th><th class="right">Δ score</th></tr>
+    {% for c in mig.improved %}
+    <tr><td><a href="/accounts/{{ c.score_id }}">{{ c.account_id }}</a></td>
+      <td class="small">{{ c.segment }}</td>
+      <td class="small">{{ m.band_dot(c['from']) }}{{ c['from'].split(' ')[0] }} &rarr; {{ m.band_dot(c['to']) }}{{ c['to'].split(' ')[0] }}</td>
+      <td class="right" style="color:#1d7a46">{{ c.ds }}</td></tr>
+    {% endfor %}
+  </table>
+</div>
+{% endif %}
+{% endif %}
+{% endblock %}

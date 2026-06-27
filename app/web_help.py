@@ -15,6 +15,9 @@ SCREENS: Dict[str, str] = {
                   "Click any total to drill into the accounts behind it."),
     "accounts": ("Every scored account. Filter by band, FI, scheme or sector, "
                  "sort by risk, and open any account to see why it was flagged."),
+    "movers": ("What changed since the previous run — which accounts deteriorated "
+               "or improved, the band-transition matrix, and the biggest movers. "
+               "The most actionable early-warning view."),
     "account_detail": ("One account, explained two ways: why the model scored "
                         "it, and how that combined with exposure and leverage "
                         "into a risk band. Print this as a case report."),

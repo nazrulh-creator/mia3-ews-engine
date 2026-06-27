@@ -38,6 +38,7 @@
 
   <nav class="nav">
     <a href="/dashboard">Dashboard</a>
+    <a href="/movers">Movers</a>
     {% if user.role == 'branch' %}<a href="/accounts?worklist=1">Worklist</a>
     {% else %}<a href="/accounts">Accounts</a>{% endif %}
     {% if user.role in ['internal','branch'] %}<a href="/review">Review</a>{% endif %}

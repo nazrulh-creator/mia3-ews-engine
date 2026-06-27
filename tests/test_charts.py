@@ -50,3 +50,21 @@ def test_scatter_caps_points():
 
 def test_scatter_empty():
     assert charts.scatter([]) == ""
+
+
+def test_lines_renders_with_goals_and_gaps():
+    svg = charts.lines(
+        [{"name": "Recall", "color": "#27ae60", "values": [0.7, 0.8, None, 0.9]}],
+        ["a", "b", "c", "d"],
+        goals=[{"label": "goal 0.75", "y": 0.75, "color": "#000"}])
+    assert "<svg" in svg and "<polyline" in svg and "goal 0.75" in svg
+
+
+def test_lines_single_point_empty():
+    assert charts.lines([{"name": "x", "color": "#000", "values": [0.5]}], ["a"]) == ""
+
+
+def test_gauge_zone_and_label():
+    g = charts.gauge(0.40)   # >= halt
+    assert "<svg" in g and "40%" in g and "halt" in g and "watch" in g
+    assert charts.gauge(0.05).count("<rect") == 2  # track + fill

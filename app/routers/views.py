@@ -7,7 +7,7 @@ from typing import Optional
 import pandas as pd
 from fastapi import APIRouter, Depends, File, Form, Request, UploadFile
 from fastapi.responses import HTMLResponse, RedirectResponse, Response, StreamingResponse
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.auth.deps import current_user, fi_scope, require_internal, require_user
@@ -63,6 +63,18 @@ def dashboard(request: Request, user: User = Depends(require_user),
         by_scheme=by_scheme, by_sector=by_sector, by_segment=by_segment,
         alerts=alerts, trend=trend, active_models=active_models,
         active_rules=active_rules, exposure=exposure, points=points))
+
+
+# --- Movers (run-over-run band migration) ---------------------------------
+@router.get("/movers", response_class=HTMLResponse)
+def movers(request: Request, user: User = Depends(require_user),
+           db: Session = Depends(get_db)):
+    scope = fi_scope(user)
+    run = runs.latest_run(db)
+    prev = runs.previous_published_run(db, run) if run else None
+    mig = runs.band_migration(db, run, prev, fi_id=scope) if (run and prev) else None
+    return templates.TemplateResponse("movers.html", _ctx(
+        request, user, "movers", run=run, prev=prev, mig=mig))
 
 
 # --- Accounts list + worklist ---------------------------------------------
@@ -194,7 +206,11 @@ def demo_page(request: Request, user: User = Depends(require_user),
 @router.post("/demo/run")
 def demo_run(request: Request, user: User = Depends(require_internal),
              db: Session = Depends(get_db)):
-    df = demo_portfolio()
+    # Vary the seed per demo run so account ids stay stable but scores drift —
+    # otherwise repeated demo runs are identical and Movers shows no change.
+    n = db.execute(select(func.count(ScoringRun.id))
+                   .where(ScoringRun.source == "demo")).scalar() or 0
+    df = demo_portfolio(seed=42 + n)
     run = runs.execute_run(db, df, source="demo", actor=user.username,
                            input_fingerprint="synthetic-demo")
     db.commit()

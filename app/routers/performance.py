@@ -25,7 +25,7 @@ def performance_page(request: Request, user: User = Depends(require_internal),
     latest = runs.latest_run(db)
     return templates.TemplateResponse("performance.html", {
         "request": request, "user": user, "screen": "performance",
-        "rows": rows, "latest": latest,
+        "rows": rows, "latest": latest, "series": performance.performance_series(db),
         "goals": {"recall": performance.GOAL_RECALL, "auc": performance.GOAL_AUC,
                   "fn": performance.GOAL_FN_MAX}})
 

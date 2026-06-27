@@ -117,3 +117,26 @@ def compute_performance(db: Session) -> List[Dict[str, object]]:
         })
     results.sort(key=lambda r: (r["run_ref"], r["segment"]), reverse=True)
     return results
+
+
+def performance_series(db: Session) -> Dict[str, Dict[str, list]]:
+    """Per-segment, chronologically-ordered metric series for trend charts.
+
+    {segment: {"x": [run labels], "recall": [...], "precision": [...],
+               "auc": [...], "fn": [...]}}  (values 0..1, None where undefined).
+    """
+    rows = compute_performance(db)
+    by_seg: Dict[str, list] = {}
+    for r in rows:
+        by_seg.setdefault(r["segment"], []).append(r)
+    out: Dict[str, Dict[str, list]] = {}
+    for seg, items in by_seg.items():
+        items = sorted(items, key=lambda r: r["run_ref"])  # chronological (timestamped refs)
+        out[seg] = {
+            "x": [r["run_ref"].split("-")[-1] for r in items],  # short run label
+            "recall": [r["recall"] for r in items],
+            "precision": [r["precision"] for r in items],
+            "auc": [r["auc"] for r in items],
+            "fn": [r["fn_rate"] for r in items],
+        }
+    return out

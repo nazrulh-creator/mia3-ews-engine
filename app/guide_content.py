@@ -217,6 +217,19 @@ glance. It always reflects the latest <i>published</i> run.</p>
  "Click any total to drill straight into the accounts behind it, then into a single account's explanation (§6).")}
 {_note("FI users see only their own book here; branch and internal users see the whole portfolio.")}"""},
 
+    {"id": "movers", "num": "4a", "title": "Movers — what changed since last run", "body": f"""
+<p>Early warning is about <i>change</i>. The <b>Movers</b> screen compares the latest run
+with the previous one, account by account, and surfaces what moved.</p>
+{_seen(
+ "Summary cards — how many accounts <b>deteriorated</b>, <b>improved</b>, stayed unchanged, are new or have exited.",
+ "A <b>band-transition matrix</b> (from → to) heatmap — cells below the diagonal are deteriorations, above it improvements.",
+ "<b>Top deteriorating</b> and <b>top improving</b> accounts, ranked by band change and risk-score delta, each linking to the account.")}
+{_steps(
+ "Scan the deteriorated count and the transition matrix for the overall direction of travel.",
+ "Work the <b>top deteriorating</b> list first — these are the accounts that slid toward MIA 3 since last month.",
+ "Open any mover to see why it moved (its explanation and arithmetic).")}
+{_note("Needs at least two published runs to compare. FI users see movers within their own book.")}"""},
+
     {"id": "accounts", "num": "5", "title": "Accounts and the worklist", "body": f"""
 <p>The accounts screen lists every scored account in the latest run, highest risk
 first. The <b>worklist</b> is the same list filtered to what needs attention.</p>
@@ -460,7 +473,7 @@ SCREEN_TO_SECTION: Dict[str, str] = {
     "worklist": "review", "review": "review", "runs": "runs", "tuning": "tuning",
     "demo": "demo", "learnings": "learnings", "audit": "audit", "models": "models",
     "contract": "contract", "login": "live-test", "performance": "performance",
-    "rules": "rules",
+    "rules": "rules", "movers": "movers",
 }
 
 

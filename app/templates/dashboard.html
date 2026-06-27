@@ -38,11 +38,17 @@
   {{ run.rows_scored }} accounts scored.</p>
 
 {% if alerts %}
-<div class="warnbox"><strong>Portfolio early-warning ladder:</strong>
+<div class="warnbox">
+  <strong>Portfolio early-warning ladder</strong>
+  <div class="row" style="margin-top:8px">
   {% for a in alerts %}
-    <span class="pill">{{ a.dimension|upper }} {{ a.key }}: {{ (a.high_risk_share*100)|round(1) }}%
-      high-risk — <strong>{{ a.tripwire|upper }}</strong></span>
+    <div style="flex:1;min-width:230px">
+      <div class="small">{{ a.dimension|upper }} <strong>{{ a.key }}</strong>
+        <span class="pill" style="background:{{ '#c0392b' if a.tripwire=='halt' else '#e67e22' }};color:#fff">{{ a.tripwire|upper }}</span></div>
+      {{ charts.gauge(a.high_risk_share) | safe }}
+    </div>
   {% endfor %}
+  </div>
 </div>
 {% endif %}
 

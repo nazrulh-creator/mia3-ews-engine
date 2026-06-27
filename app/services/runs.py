@@ -180,6 +180,60 @@ def breakdown(db: Session, run_id: int, dimension: str,
     return rows
 
 
+def previous_published_run(db: Session, before: ScoringRun) -> Optional[ScoringRun]:
+    """The published run immediately before `before` — for run-over-run change."""
+    stmt = (select(ScoringRun)
+            .where(ScoringRun.published.is_(True), ScoringRun.created_at < before.created_at)
+            .order_by(ScoringRun.created_at.desc()).limit(1))
+    return db.execute(stmt).scalars().first()
+
+
+def band_migration(db: Session, run: ScoringRun, prev_run: ScoringRun, *,
+                   fi_id: Optional[str] = None, top: int = 12) -> Dict[str, object]:
+    """Compare two runs account-by-account: transition matrix, summary, movers."""
+    pstmt = select(AccountScore.account_id, AccountScore.band, AccountScore.risk_score
+                   ).where(AccountScore.run_id == prev_run.id)
+    if fi_id:
+        pstmt = pstmt.where(AccountScore.fi_id == fi_id)
+    prev = {aid: (band, score) for aid, band, score in db.execute(pstmt).all()}
+
+    cstmt = select(AccountScore.id, AccountScore.account_id, AccountScore.segment,
+                   AccountScore.band, AccountScore.risk_score, AccountScore.probability
+                   ).where(AccountScore.run_id == run.id)
+    if fi_id:
+        cstmt = cstmt.where(AccountScore.fi_id == fi_id)
+
+    rank = {b: i for i, b in enumerate(S.BANDS)}  # 0 = worst (Very High)
+    matrix: Dict[str, Dict[str, int]] = {}
+    max_cell = 0
+    summary = {"deteriorated": 0, "improved": 0, "unchanged": 0, "new": 0, "exited": 0}
+    changes, cur_ids = [], set()
+    for sid, aid, seg, band, score, prob in db.execute(cstmt).all():
+        cur_ids.add(aid)
+        if aid not in prev:
+            summary["new"] += 1
+            continue
+        pband, pscore = prev[aid]
+        row = matrix.setdefault(pband, {})
+        row[band] = row.get(band, 0) + 1
+        max_cell = max(max_cell, row[band])
+        ds = round(float(score) - float(pscore), 3)
+        worse = rank[band] < rank[pband] or (band == pband and ds > 0)
+        better = rank[band] > rank[pband] or (band == pband and ds < 0)
+        summary["deteriorated" if worse else "improved" if better else "unchanged"] += 1
+        changes.append({"score_id": sid, "account_id": aid, "segment": seg,
+                        "from": pband, "to": band, "ds": ds, "prob": float(prob)})
+    summary["exited"] = sum(1 for aid in prev if aid not in cur_ids)
+    summary["total"] = len(cur_ids)
+
+    deteriorated = sorted(changes, key=lambda c: (rank[c["to"]] - rank[c["from"]], -c["ds"]))
+    det = [c for c in deteriorated if rank[c["to"]] < rank[c["from"]] or c["ds"] > 0][:top]
+    improved = sorted(changes, key=lambda c: (rank[c["from"]] - rank[c["to"]], c["ds"]))
+    imp = [c for c in improved if rank[c["to"]] > rank[c["from"]] or c["ds"] < 0][:top]
+    return {"run_ref": run.run_ref, "prev_ref": prev_run.run_ref, "summary": summary,
+            "matrix": matrix, "max_cell": max_cell, "deteriorated": det, "improved": imp}
+
+
 def exposure_by_band(db: Session, run_id: int, *, fi_id: Optional[str] = None) -> Dict[str, float]:
     """Sum of EAD (RM at risk) by band — counts don't show where the money is."""
     stmt = select(AccountScore.band, func.sum(AccountScore.ead)).where(AccountScore.run_id == run_id)

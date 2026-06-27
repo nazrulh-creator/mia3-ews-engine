@@ -21,6 +21,28 @@
 <p class="muted">No outcomes recorded yet. Record realised outcomes on accounts
   (or simulate a set in TEST) to see performance against the goals.</p>
 {% else %}
+
+{% for seg, s in series.items() if s.x|length > 1 %}
+<div class="card" style="margin-bottom:14px">
+  <h2 style="margin-top:0">{{ seg }} — metric trend vs goals</h2>
+  <div class="small muted" style="margin-bottom:4px">
+    <span style="color:#27ae60">■</span> Recall&nbsp;
+    <span style="color:#4B6EEC">■</span> Precision&nbsp;
+    <span style="color:#003A70">■</span> AUC&nbsp;
+    <span style="color:#c0392b">■</span> FN rate&nbsp;&nbsp;<span class="muted">(dashed = goal)</span>
+  </div>
+  {{ charts.lines(
+      [{'name':'Recall','color':'#27ae60','values':s.recall},
+       {'name':'Precision','color':'#4B6EEC','values':s.precision},
+       {'name':'AUC','color':'#003A70','values':s.auc},
+       {'name':'FN','color':'#c0392b','values':s.fn}],
+      s.x,
+      goals=[{'label':'Recall 0.75','y':0.75,'color':'#27ae60'},
+             {'label':'AUC 0.65','y':0.65,'color':'#003A70'},
+             {'label':'FN 0.20','y':0.20,'color':'#c0392b'}]) | safe }}
+</div>
+{% endfor %}
+
 <table>
   <tr><th>Run</th><th>Segment</th><th class="right">Scored</th><th class="right">Events</th>
     <th class="right">Recall</th><th class="right">Precision</th>
