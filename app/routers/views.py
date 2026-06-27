@@ -42,12 +42,15 @@ def dashboard(request: Request, user: User = Depends(require_user),
     scope = fi_scope(user)
     run = runs.latest_run(db)
     counts, by_fi, by_scheme, by_sector, by_segment, alerts = {}, [], [], [], [], []
+    exposure, points = {}, []
     if run:
         counts = runs.band_counts(db, run.id, fi_id=scope)
         by_fi = runs.breakdown(db, run.id, "fi_id", fi_id=scope)
         by_scheme = runs.breakdown(db, run.id, "scheme", fi_id=scope)
         by_sector = runs.breakdown(db, run.id, "sector", fi_id=scope)
         by_segment = runs.breakdown(db, run.id, "segment", fi_id=scope)
+        exposure = runs.exposure_by_band(db, run.id, fi_id=scope)
+        points = runs.risk_points(db, run.id, fi_id=scope)
         alerts = db.execute(select(PortfolioAlert).where(PortfolioAlert.run_ref == run.run_ref)
                             ).scalars().all()
         if scope:
@@ -59,7 +62,7 @@ def dashboard(request: Request, user: User = Depends(require_user),
         request, user, "dashboard", run=run, counts=counts, by_fi=by_fi,
         by_scheme=by_scheme, by_sector=by_sector, by_segment=by_segment,
         alerts=alerts, trend=trend, active_models=active_models,
-        active_rules=active_rules))
+        active_rules=active_rules, exposure=exposure, points=points))
 
 
 # --- Accounts list + worklist ---------------------------------------------

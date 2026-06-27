@@ -205,6 +205,9 @@ glance. It always reflects the latest <i>published</i> run.</p>
 {_seen(
  "A <b>What's shaping the risk picture</b> panel — the active model(s) and Decision Rule per segment, so you always know what produced the numbers.",
  "Four <b>band cards</b> — counts of Very High, High, Moderate and Low risk. Click a card to see those accounts.",
+ "A <b>risk-band mix</b> donut and an <b>exposure-by-band</b> bar — counts and the RM at risk side by side (a few Very-High accounts often hold most of the money).",
+ "A <b>risk map</b> — every account plotted by probability against exposure; the shaded top-right quadrant (likely <i>and</i> high-impact) is where to act first.",
+ "<b>By-FI / scheme / sector band heatmaps</b> — cell shading shows where each band concentrates, and a <b>trend</b> stacked-area shows deterioration as a shape over runs.",
  "<b>By FI, by scheme and by sector</b> tables, each sortable, with the high-risk share highlighted.",
  "A <b>trend</b> table — how each band's population moves run to run, so deterioration shows as a shape.",
  "Any <b>portfolio early-warning ladder</b> alerts for the run (see §14).")}

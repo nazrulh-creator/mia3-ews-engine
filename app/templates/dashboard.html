@@ -55,6 +55,38 @@
   {% endfor %}
 </div>
 
+<div class="row" style="margin-top:18px">
+  <div class="card" style="flex:1;min-width:300px">
+    <h2>Risk band mix</h2>
+    <div style="display:flex;gap:18px;align-items:center;flex-wrap:wrap">
+      {{ charts.donut(counts)|safe }}
+      <div style="flex:1;min-width:170px">
+        <div class="small muted" style="margin-bottom:4px">Exposure at risk by band</div>
+        {{ charts.hbars([
+            ('Very High', exposure.get('Very High Risk', 0), BAND_META['Very High Risk']['color']),
+            ('High', exposure.get('High Risk', 0), BAND_META['High Risk']['color']),
+            ('Moderate', exposure.get('Moderate Risk', 0), BAND_META['Moderate Risk']['color']),
+            ('Low', exposure.get('Low Risk', 0), BAND_META['Low Risk']['color'])]) | safe }}
+        <div class="small muted">Total exposure {{ charts.rm_short(exposure.values()|sum) }}.
+          A few Very-High accounts often hold most of the money at risk.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if points %}
+<div class="card" style="margin-top:16px">
+  <div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap">
+    <h2 style="margin:0">Risk map — probability &times; exposure</h2>
+    <span class="small muted">bubble size = leverage · {{ points|length }} accounts</span>
+  </div>
+  <div style="margin-top:8px">{{ charts.scatter(points) | safe }}</div>
+  <div class="small muted" style="margin-top:4px">
+    {% for band in BANDS %}{{ m.band_dot(band) }}{{ band }}&nbsp;&nbsp;{% endfor %}
+    — the shaded top-right quadrant is where to act first.</div>
+</div>
+{% endif %}
+
 {% if by_segment and by_segment|length > 1 %}
 <div class="card" style="margin-top:18px">
   <h2>By segment</h2>
@@ -73,18 +105,20 @@
 
 <div class="row" style="margin-top:18px">
   {% for title, dim, data in [('By FI','fi', by_fi),('By scheme','scheme', by_scheme),('By sector','sector', by_sector)] %}
-  <div class="card" style="flex:1;min-width:320px">
-    <h2>{{ title }}</h2>
+  <div class="card" style="flex:1;min-width:340px">
+    <h2>{{ title }} <span class="small muted">— band heatmap</span></h2>
     <table>
-      <tr><th>{{ dim|capitalize }}</th><th class="right">Total</th>
-        <th class="right">High-risk</th><th class="right">High %</th></tr>
+      <tr><th>{{ dim|capitalize }}</th><th class="right">Total</th><th class="right">High %</th>
+        {% for band in BANDS %}<th class="right" title="{{ band }}">{{ band.split(' ')[0] }}</th>{% endfor %}</tr>
       {% for r in data %}
       <tr>
-        <td><a href="/accounts?{{ dim if dim!='fi' else 'fi' }}={{ r.key|urlencode }}">{{ r.key }}</a></td>
+        <td><a href="/accounts?{{ dim }}={{ r.key|urlencode }}">{{ r.key }}</a></td>
         <td class="right">{{ r.total }}</td>
-        <td class="right">{{ r.high_risk }}</td>
         <td class="right" style="color:{{ '#c0392b' if r.high_share>=0.3 else ('#e67e22' if r.high_share>=0.15 else 'inherit') }}">
           {{ (r.high_share*100)|round(1) }}%</td>
+        {% for band in BANDS %}
+        <td class="right" style="background:{{ heat(BAND_META[band]['color'], (r[band]/r.total) if r.total else 0) }}">{{ r[band] }}</td>
+        {% endfor %}
       </tr>
       {% endfor %}
     </table>
@@ -94,13 +128,16 @@
 
 {% if trend|length > 1 %}
 <div class="card" style="margin-top:18px">
+  <h2>Trend over runs <span class="small muted">— band population as a shape</span></h2>
+  {{ charts.stacked_area(trend) | safe }}
+  <div class="small muted" style="margin-top:4px">
+    {% for band in BANDS %}{{ m.band_dot(band) }}{{ band }}&nbsp;&nbsp;{% endfor %}</div>
+</div>
+{% else %}
+<div class="card" style="margin-top:18px">
   <h2>Trend over runs</h2>
-  <table>
-    <tr><th>Run date</th>{% for band in BANDS %}<th class="right">{{ m.band_dot(band) }}{{ band }}</th>{% endfor %}</tr>
-    {% for t in trend %}
-    <tr><td>{{ t.created_at }}</td>{% for band in BANDS %}<td class="right">{{ t.get(band,0) }}</td>{% endfor %}</tr>
-    {% endfor %}
-  </table>
+  <p class="muted small">The trend appears as a stacked-area shape once there are at least
+    two published runs. Run another scoring cycle to start the series.</p>
 </div>
 {% endif %}
 {% endif %}

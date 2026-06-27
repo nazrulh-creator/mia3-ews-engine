@@ -8,8 +8,17 @@ from app.core.scoring import BAND_META, BANDS
 from app.auth.deps import ROLE_LABELS
 from app import web_help
 from app import guide_content
+from app.core import charts as charts_kit
 
 templates = Jinja2Templates(directory=str(BASE_DIR / "app" / "templates"))
+
+
+def heat(hex_color: str, share: float) -> str:
+    """Heatmap cell background: the band colour at opacity scaled by its share."""
+    h = hex_color.lstrip("#")
+    r, g, b = int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
+    a = min(0.85, max(0.0, float(share)) * 0.9)
+    return f"rgba({r},{g},{b},{a:.2f})"
 
 # Globals available in every template.
 templates.env.globals.update(
@@ -20,6 +29,8 @@ templates.env.globals.update(
     purpose=web_help.purpose,
     field_help=web_help.FIELDS,
     guide_anchor=guide_content.section_for_screen,
+    charts=charts_kit,
+    heat=heat,
 )
 
 

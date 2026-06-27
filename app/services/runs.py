@@ -180,6 +180,30 @@ def breakdown(db: Session, run_id: int, dimension: str,
     return rows
 
 
+def exposure_by_band(db: Session, run_id: int, *, fi_id: Optional[str] = None) -> Dict[str, float]:
+    """Sum of EAD (RM at risk) by band — counts don't show where the money is."""
+    stmt = select(AccountScore.band, func.sum(AccountScore.ead)).where(AccountScore.run_id == run_id)
+    if fi_id:
+        stmt = stmt.where(AccountScore.fi_id == fi_id)
+    stmt = stmt.group_by(AccountScore.band)
+    out = {b: 0.0 for b in S.BANDS}
+    for band, total in db.execute(stmt).all():
+        out[band] = float(total or 0)
+    return out
+
+
+def risk_points(db: Session, run_id: int, *, fi_id: Optional[str] = None,
+                limit: int = 3000) -> List[tuple]:
+    """(probability, ead, outstanding_ratio, band) per account — for the risk map."""
+    stmt = select(AccountScore.probability, AccountScore.ead,
+                  AccountScore.outstanding_ratio, AccountScore.band).where(
+        AccountScore.run_id == run_id)
+    if fi_id:
+        stmt = stmt.where(AccountScore.fi_id == fi_id)
+    stmt = stmt.limit(limit)
+    return [(float(p), float(e), float(o), b) for p, e, o, b in db.execute(stmt).all()]
+
+
 def trend(db: Session, *, limit: int = 12, fi_id: Optional[str] = None) -> List[Dict[str, object]]:
     runs = db.execute(select(ScoringRun).where(ScoringRun.published.is_(True))
                       .order_by(ScoringRun.created_at.asc())).scalars().all()
