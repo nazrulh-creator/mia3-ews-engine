@@ -21,21 +21,22 @@ a:hover{text-decoration:underline}
 .envbar{color:#fff;text-align:center;font-weight:700;font-size:12px;
   letter-spacing:.08em;padding:5px;position:relative;z-index:2}
 .env-test .envbar{color:#5a3300}  /* dark text for contrast on CGC Orange */
-.topbar{display:flex;justify-content:space-between;align-items:center;
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;
   background:var(--card);border-bottom:1px solid var(--line);padding:12px 22px;position:relative;z-index:2}
-.brand{display:flex;align-items:center;gap:12px}
+.brand{display:flex;align-items:center;gap:12px;min-width:0}
 .brand-mark{background:var(--sda);color:#fff;font-weight:800;border-radius:8px;
-  padding:8px 11px;letter-spacing:.05em}
-.brand-text strong{display:block}
+  padding:8px 11px;letter-spacing:.05em;flex-shrink:0}
+.brand-text strong{display:block;line-height:1.2}
 .brand-text small{color:var(--muted)}
-.userbox{display:flex;align-items:center;gap:16px;font-size:13px}
+.userbox{display:flex;align-items:center;gap:16px;font-size:13px;flex-wrap:wrap}
 .userbox .who{color:var(--muted)}
+.userbox .who,.userbox .link,.userbox form{white-space:nowrap}
 .inline{display:inline}
 button.link,a.link{background:none;border:none;color:var(--accent);cursor:pointer;
   font-size:13px;padding:0;font-family:inherit}
-.nav{display:flex;gap:4px;flex-wrap:wrap;background:var(--card);
-  border-bottom:1px solid var(--line);padding:0 18px;position:relative;z-index:2}
-.nav a{padding:11px 14px;color:var(--ink);border-bottom:2px solid transparent}
+.nav{display:flex;gap:2px;flex-wrap:wrap;background:var(--card);
+  border-bottom:1px solid var(--line);padding:0 16px;position:relative;z-index:2}
+.nav a{padding:11px 12px;color:var(--ink);border-bottom:2px solid transparent;white-space:nowrap}
 .nav a:hover{border-color:var(--sda-2);text-decoration:none}
 .content{max-width:1180px;margin:22px auto;padding:0 22px;position:relative;z-index:1}
 .purpose{background:#eef2f8;border:1px solid #d8e0ee;border-radius:10px;
@@ -158,3 +159,18 @@ ul.g-seen li{margin:5px 0}
   box-shadow:0 6px 20px rgba(0,0,0,.22);pointer-events:none;opacity:0;transition:opacity .08s}
 .info{cursor:help;outline:none}
 .info:focus{box-shadow:0 0 0 2px var(--sda-2)}
+
+/* ---- Responsive chrome (header + nav) ---- */
+@media (max-width:820px){
+  .topbar{flex-direction:column;align-items:flex-start;gap:8px;padding:10px 16px}
+  .brand-text strong{font-size:15px}
+  .userbox{width:100%;justify-content:flex-start;gap:14px;font-size:12.5px}
+  /* nav becomes one tidy horizontally-scrollable row instead of many wrapped rows */
+  .nav{flex-wrap:nowrap;overflow-x:auto;padding:0 12px;scrollbar-width:thin}
+  .nav::-webkit-scrollbar{height:4px}
+  .nav a{padding:10px 11px;font-size:13.5px}
+  .nav-spacer{display:none}
+  .content{padding:0 14px;margin:16px auto}
+  .row{gap:12px}
+  h1{font-size:20px}
+}

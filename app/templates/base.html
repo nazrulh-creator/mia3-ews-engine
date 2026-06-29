@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{ settings.app_name }}{% block title %}{% endblock %}</title>
-  <link rel="stylesheet" href="/static/app.css">
+  <link rel="stylesheet" href="/static/app.css?v={{ asset_version }}">
 </head>
 <body class="{{ 'env-live' if settings.is_live else 'env-test' }}">
   {% if settings.env_watermark %}<div class="watermark">{{ settings.env_watermark }}</div>{% endif %}

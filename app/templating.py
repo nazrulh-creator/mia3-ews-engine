@@ -13,6 +13,12 @@ from app.services.appsettings import viz_flags
 
 templates = Jinja2Templates(directory=str(BASE_DIR / "app" / "templates"))
 
+# Cache-busting token for static assets — the app.css modification time, so
+# browsers fetch fresh CSS whenever it changes (and never serve stale styles).
+import os as _os
+_css_path = BASE_DIR / "app" / "static" / "app.css"
+ASSET_VERSION = str(int(_os.path.getmtime(_css_path))) if _css_path.exists() else "1"
+
 
 def heat(hex_color: str, share: float) -> str:
     """Heatmap cell background: the band colour at opacity scaled by its share."""
@@ -33,6 +39,7 @@ templates.env.globals.update(
     charts=charts_kit,
     heat=heat,
     viz_flags=viz_flags,
+    asset_version=ASSET_VERSION,
 )
 
 
