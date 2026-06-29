@@ -10,6 +10,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.auth.security import hash_password
+from app.config import get_settings
 from app.core.features import SEGMENTS
 from app.core.model import get_active_model
 from app.db import audit
@@ -55,6 +56,33 @@ def ensure_seed(db: Session) -> None:
 
     audit.record(db, actor="system", action="system.seed", entity_type="system",
                  detail="Initial bootstrap: users, baseline thresholds, model registry.")
+
+
+def ensure_demo_users(db: Session) -> None:
+    """TEST only: guarantee the demo accounts exist with their known passwords.
+
+    The TEST environment is a synthetic-data sandbox whose demo credentials are
+    public by design. Re-asserting them on every startup means a deploy can
+    never lock everyone out (and is skipped entirely on LIVE, where real
+    accounts are managed properly).
+    """
+    if get_settings().is_live:
+        return
+    created = []
+    for username, pw, role, name, fi_id, branch in DEFAULT_USERS:
+        u = db.execute(select(User).where(User.username == username)).scalars().first()
+        if u is None:
+            db.add(User(username=username, password_hash=hash_password(pw), role=role,
+                        display_name=name, fi_id=fi_id, branch=branch))
+            created.append(username)
+        else:
+            # Keep the known demo password and role current.
+            u.password_hash = hash_password(pw)
+            u.role, u.fi_id, u.branch = role, fi_id, branch
+    db.flush()
+    if created:
+        audit.record(db, actor="system", action="system.ensure_demo_users",
+                     entity_type="system", detail=f"Created demo accounts: {created}")
 
 
 def ensure_segment_models(db: Session) -> None:

@@ -15,7 +15,7 @@ from app.config import BASE_DIR, get_settings
 from app.db.database import init_db, session_scope
 from app.routers import (api, auth, config, guide, models, performance, review,
                         rules, tuning, views)
-from app.services.seed import ensure_seed, ensure_segment_models
+from app.services.seed import ensure_demo_users, ensure_seed, ensure_segment_models
 
 settings = get_settings()
 app = FastAPI(title=settings.app_name, docs_url="/api/docs", openapi_url="/api/openapi.json")
@@ -40,6 +40,7 @@ def _startup() -> None:
     init_db()
     with session_scope() as db:
         ensure_seed(db)
+        ensure_demo_users(db)  # TEST-only: keep demo logins working after any deploy
         ensure_segment_models(db)
         from app.services.appsettings import load_cache
         load_cache(db)
