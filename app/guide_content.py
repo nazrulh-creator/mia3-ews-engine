@@ -160,6 +160,81 @@ def _seen(*items: str) -> str:
 
 # --- The sections ----------------------------------------------------------
 SECTIONS: List[Dict[str, str]] = [
+    {"id": "overview", "num": "0", "title": "Overview — objectives, approach & limitations", "body": f"""
+<p>This preamble sets the context for everything that follows. The rest of the guide is a
+screen-by-screen walkthrough; read this first to understand <b>what the engine is for, how it
+is built, and what it can and cannot yet do</b>.</p>
+
+<h3>What it is, in one line</h3>
+<p>The MIA3 Early Warning Engine is a <b>smoke detector for the guaranteed portfolio</b>: it
+watches the loans already on the book and raises an early alarm on the accounts starting to
+smoulder — so the internal risk team, branches and FI partners can act before a problem becomes
+a loss. (Its sibling, MicroFlex, is the <i>gatekeeper</i> that decides new loans; MIA3 only
+monitors existing ones.)</p>
+
+<h3>Key objectives</h3>
+<ul>
+<li><b>Predict</b> the probability that an account slips into Months-in-Arrears 3 (MIA 3) within
+the forecast horizon — the early-warning signal.</li>
+<li><b>Prioritise</b> by combining that probability with the exposure at risk and the customer's
+leverage into a single risk score and band — answering not just <i>who</i> might deteriorate but
+<i>which accounts matter most</i>.</li>
+<li><b>Act with a person in the loop</b> — surface the right accounts to the right role, with a
+clear, explainable reason, so a human reviews every high-risk call. The engine never takes
+automated action against a customer.</li>
+<li><b>Be defensible</b> — every score, setting and decision is governed, auditable and
+reproducible, to a standard a board or regulator can rely on.</li>
+</ul>
+
+<h3>Broad implementation strategy</h3>
+<ul>
+<li><b>One scoring core, three doors.</b> A single Python/FastAPI application (a modular
+monolith) scores the whole portfolio and serves three role-based views — internal risk,
+branches, and FIs (each FI sees only its own book).</li>
+<li><b>The risk framework.</b> Risk score = 0.5·rank(probability) + 0.3·rank(exposure) +
+0.2·rank(outstanding ratio) → four bands (Very High / High / Moderate / Low). The weights and
+cut-offs are governed settings, not hard-coded.</li>
+<li><b>Flexible models, per segment.</b> Guarantee and Financing are scored by their own
+models; several model <b>types</b> are supported (a synthetic stand-in, in-app glass-box
+logistic/OLS, and uploaded ML artifacts such as XGBoost), and more than one can be active per
+segment, combined by a governed ensemble <b>Decision Rule</b>.</li>
+<li><b>Explain, then route.</b> Every flag carries a SHAP explanation (why the model scored it)
+and the live arithmetic (how the band was reached); a five-component confidence score routes
+work — borderline cases are held for human review.</li>
+<li><b>Governance throughout.</b> Dual control on every consequential change, a hash-chained
+tamper-evident audit trail, a governed calibration layer, a golden test pack, and ringfenced
+LIVE / TEST environments with separate databases.</li>
+<li><b>Operate on a cycle.</b> The portfolio is scored on a monthly batch (file, database feed,
+manual or scheduled run), with realised outcomes fed back for performance monitoring and
+re-calibration. Deployed on Fly.io.</li>
+</ul>
+
+<h3>Current limitations (read these honestly)</h3>
+{_warn("The hosted TEST app runs a <b>deterministic synthetic stand-in model on synthetic "
+       "data</b> — it demonstrates the mechanism, it is not real monitoring. The back-tested "
+       "XGBoost model drops in via the model registry; nothing here reflects a real borrower.")}
+<ul>
+<li><b>Accuracy trade-off.</b> The model is tuned for high recall (catches most at-risk accounts
+early) at the cost of <b>very low precision (~0.1 in recent monthly results)</b> — meaning
+roughly nine in ten flags are false alarms by design. That is acceptable for prioritising
+accounts for a human to review, and is exactly why a person stays in the loop.</li>
+<li><b>Calibration pending.</b> The governed calibration layer exists but defaults to
+<i>uncalibrated</i> until back-testing tells us how to map raw output onto observed reality.</li>
+<li><b>Label bias to manage.</b> Once the tool prompts interventions, outcomes are influenced by
+those actions (selective labels / censoring). This is recorded (intervention &amp; exit-reason
+capture) so future re-calibration can correct for it. Classic reject inference does not apply —
+MIA3 scores the existing book, not applicants it never sees.</li>
+<li><b>Environment &amp; access.</b> TEST uses SQLite on a single (non-redundant) volume and
+public demo credentials by design; production needs managed PostgreSQL, durable artifact
+storage, and properly managed accounts.</li>
+<li><b>Not yet built.</b> A literal Malaysia branch choropleth (a branch heatmap stands in for
+now), PNG chart export (SVG is provided), a live database-feed connector, and expected-loss
+economics on at-risk exposure.</li>
+</ul>
+{_note("In short: the platform, governance and explainability are production-grade and "
+       "complete; the model's real-world accuracy is a work in progress, which is why the whole "
+       "design keeps a human on the loop while calibration matures.")}"""},
+
     {"id": "live-test", "num": "1", "title": "LIVE and TEST environments", "body": f"""
 <p>The engine runs two ringfenced environments. Always check which one you are in
 before acting — the colour of the top bar tells you instantly.</p>
