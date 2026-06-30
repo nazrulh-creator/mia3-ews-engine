@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
-from app.auth.deps import require_internal, require_user
+from app.auth.deps import require_internal, require_user, require_staff_view, require_writer
 from app.config import get_settings
 from app.db import audit
 from app.db.database import get_db
@@ -19,7 +19,7 @@ router = APIRouter()
 
 
 @router.get("/performance")
-def performance_page(request: Request, user: User = Depends(require_internal),
+def performance_page(request: Request, user: User = Depends(require_staff_view),
                      db: Session = Depends(get_db)):
     rows = performance.compute_performance(db)
     latest = runs.latest_run(db)
@@ -49,7 +49,7 @@ def performance_simulate(request: Request, user: User = Depends(require_internal
 @router.post("/accounts/{score_id}/outcome")
 def record_outcome(score_id: int, request: Request, actual_mia3: str = Form(...),
                    intervention_applied: str = Form(""), exit_reason: str = Form(""),
-                   user: User = Depends(require_user), db: Session = Depends(get_db)):
+                   user: User = Depends(require_writer), db: Session = Depends(get_db)):
     score = db.get(AccountScore, score_id)
     if score is None:
         return RedirectResponse("/accounts", status_code=303)

@@ -10,7 +10,7 @@ from fastapi.responses import RedirectResponse
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.auth.deps import require_internal
+from app.auth.deps import require_internal, require_staff_view
 from app.core import scoring as S
 from app.db.database import get_db
 from app.db.models import CalibrationConfig, ModelRegistry, ThresholdConfig, User
@@ -36,7 +36,7 @@ def _render(request, user, db, *, preview=None, error=None, status_code=200):
 
 
 @router.get("/tuning")
-def tuning_page(request: Request, user: User = Depends(require_internal),
+def tuning_page(request: Request, user: User = Depends(require_staff_view),
                 db: Session = Depends(get_db)):
     return _render(request, user, db)
 

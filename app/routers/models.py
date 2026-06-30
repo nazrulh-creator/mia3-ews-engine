@@ -19,7 +19,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.auth.deps import require_internal
+from app.auth.deps import require_internal, require_staff_view
 from app.config import MODELS_DIR
 from app.core.features import SEGMENTS
 from app.core.model import coefficient_template, validate_model
@@ -64,7 +64,7 @@ def _render(request: Request, user: User, db: Session, *, error=None, ok=None, s
 
 
 @router.get("/models", response_class=HTMLResponse)
-def models_page(request: Request, user: User = Depends(require_internal),
+def models_page(request: Request, user: User = Depends(require_staff_view),
                 db: Session = Depends(get_db)):
     return _render(request, user, db)
 

@@ -10,7 +10,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse, Response, Streamin
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.auth.deps import current_user, fi_scope, require_internal, require_user
+from app.auth.deps import current_user, fi_scope, require_internal, require_user, require_staff_view, require_writer
 from app.config import get_settings
 from app.core import charts
 from app.core import explain as E
@@ -177,7 +177,7 @@ def account_report(score_id: int, user: User = Depends(require_user),
 
 # --- Runs: upload / manual run / list -------------------------------------
 @router.get("/runs", response_class=HTMLResponse)
-def runs_page(request: Request, user: User = Depends(require_internal),
+def runs_page(request: Request, user: User = Depends(require_staff_view),
               db: Session = Depends(get_db)):
     rows = db.execute(select(ScoringRun).order_by(ScoringRun.created_at.desc()).limit(50)
                       ).scalars().all()
@@ -254,7 +254,7 @@ def learnings_page(request: Request, user: User = Depends(require_user),
 @router.post("/learnings/add")
 def learnings_add(request: Request, title: str = Form(...), body: str = Form(...),
                   category: str = Form("note"), linked_account: str = Form(""),
-                  user: User = Depends(require_user), db: Session = Depends(get_db)):
+                  user: User = Depends(require_writer), db: Session = Depends(get_db)):
     item = Learning(author=user.username, category=category, title=title, body=body,
                     linked_account=linked_account or None)
     db.add(item)
@@ -266,7 +266,7 @@ def learnings_add(request: Request, title: str = Form(...), body: str = Form(...
 
 # --- Audit -----------------------------------------------------------------
 @router.get("/audit", response_class=HTMLResponse)
-def audit_page(request: Request, user: User = Depends(require_internal),
+def audit_page(request: Request, user: User = Depends(require_staff_view),
                db: Session = Depends(get_db)):
     events = db.execute(select(audit.AuditEvent).order_by(audit.AuditEvent.seq.desc())
                         .limit(300)).scalars().all()

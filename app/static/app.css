@@ -177,3 +177,11 @@ ul.g-seen li{margin:5px 0}
   .row{gap:12px}
   h1{font-size:20px}
 }
+
+/* ---- Read-only viewer: neutralise mutation (POST) forms, keep GET filters ---- */
+body.role-viewer form[method="post"] button{display:none}
+body.role-viewer form[method="post"] input,
+body.role-viewer form[method="post"] select,
+body.role-viewer form[method="post"] textarea{
+  pointer-events:none;background:#f2f4f7;color:#9aa3b2;border-color:#e2e8f0}
+body.role-viewer .report{display:none}

@@ -23,6 +23,7 @@ DEFAULT_USERS = [
     ("branch", "branch123", "branch", "Branch Officer — KL", None, "KL-Sentral"),
     ("fi_mbb", "fi123", "fi", "Maybank Portfolio Desk", "MBB", None),
     ("fi_cimb", "fi123", "fi", "CIMB Portfolio Desk", "CIMB", None),
+    ("viewer", "viewer123", "viewer", "Demo Viewer (read-only)", None, None),
 ]
 
 

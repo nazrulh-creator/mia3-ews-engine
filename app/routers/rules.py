@@ -15,7 +15,7 @@ from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
 
-from app.auth.deps import require_internal
+from app.auth.deps import require_internal, require_staff_view
 from app.core.features import SEGMENTS
 from app.db.database import get_db
 from app.db.models import User
@@ -36,7 +36,7 @@ def _render(request: Request, user: User, db: Session, *, error=None, status_cod
 
 
 @router.get("/rules", response_class=HTMLResponse)
-def rules_page(request: Request, user: User = Depends(require_internal),
+def rules_page(request: Request, user: User = Depends(require_staff_view),
                db: Session = Depends(get_db)):
     return _render(request, user, db)
 

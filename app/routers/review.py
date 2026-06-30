@@ -11,7 +11,7 @@ from fastapi.responses import RedirectResponse
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.auth.deps import fi_scope, require_user
+from app.auth.deps import fi_scope, require_user, require_writer
 from app.db import audit
 from app.db.database import get_db
 from app.db.models import AccountScore, Learning, ReviewDecision, User
@@ -43,7 +43,7 @@ def review_queue(request: Request, user: User = Depends(require_user),
 @router.post("/review/{score_id}")
 def review_decision(score_id: int, request: Request, decision: str = Form(...),
                     reason: str = Form(""), observed_outcome: str = Form(""),
-                    user: User = Depends(require_user), db: Session = Depends(get_db)):
+                    user: User = Depends(require_writer), db: Session = Depends(get_db)):
     score = db.get(AccountScore, score_id)
     if score is None:
         return RedirectResponse("/review", status_code=303)

@@ -6,7 +6,7 @@
   <title>{{ settings.app_name }}{% block title %}{% endblock %}</title>
   <link rel="stylesheet" href="/static/app.css?v={{ asset_version }}">
 </head>
-<body class="{{ 'env-live' if settings.is_live else 'env-test' }}">
+<body class="{{ 'env-live' if settings.is_live else 'env-test' }} role-{{ user.role if user else 'anon' }}">
   {% if settings.env_watermark %}<div class="watermark">{{ settings.env_watermark }}</div>{% endif %}
 
   <div class="envbar" style="background:{{ settings.banner_color }}">
@@ -41,8 +41,8 @@
     {% if viz_flags().tier2 %}<a href="/movers">Movers</a>{% endif %}
     {% if user.role == 'branch' %}<a href="/accounts?worklist=1">Worklist</a>
     {% else %}<a href="/accounts">Accounts</a>{% endif %}
-    {% if user.role in ['internal','branch'] %}<a href="/review">Review</a>{% endif %}
-    {% if user.role == 'internal' %}
+    {% if user.role in ['internal','branch','viewer'] %}<a href="/review">Review</a>{% endif %}
+    {% if user.role in ['internal','viewer'] %}
       <a href="/runs">Runs</a><a href="/tuning">Tuning</a>
       <a href="/models">Models</a><a href="/rules">Decision rules</a>
       <a href="/performance">Performance</a><a href="/audit">Audit</a><a href="/config">Config</a>
@@ -50,7 +50,7 @@
     <a href="/learnings">Learnings</a>
     {% if user.role == 'internal' %}<a href="/demo">Demo</a>{% endif %}
     <a href="/contract">Data contract</a>
-    {% if user.role in ['internal','fi'] %}<a href="/api/docs">API</a>{% endif %}
+    {% if user.role in ['internal','fi','viewer'] %}<a href="/api/docs">API</a>{% endif %}
     <span class="nav-spacer"></span>
     <a href="/guide" target="_blank" rel="noopener" class="nav-help">📖 Guide</a>
     <a href="/quickstart" target="_blank" rel="noopener" class="nav-help">Quick start</a>
@@ -58,6 +58,12 @@
   {% endif %}
 
   <main class="content">
+    {% if user and user.role == 'viewer' %}
+    <div class="warnbox" style="display:flex;align-items:center;gap:8px">
+      👁 <span><strong>Read-only demo account.</strong> Explore every screen freely —
+      actions (running scoring, tuning, model/rule changes, reviews) are disabled.</span>
+    </div>
+    {% endif %}
     {% if screen %}
     <div class="purpose">
       {% if purpose(screen) %}

@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
 
-from app.auth.deps import require_internal
+from app.auth.deps import require_internal, require_staff_view
 from app.db.database import get_db
 from app.db.models import User
 from app.services import appsettings
@@ -15,7 +15,7 @@ router = APIRouter()
 
 
 @router.get("/config", response_class=HTMLResponse)
-def config_page(request: Request, user: User = Depends(require_internal),
+def config_page(request: Request, user: User = Depends(require_staff_view),
                 db: Session = Depends(get_db)):
     appsettings.load_cache(db)  # ensure fresh
     return templates.TemplateResponse("config.html", {
